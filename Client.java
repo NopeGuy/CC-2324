@@ -17,7 +17,8 @@ public class Client {
 
             //ter IP e enviar ao server
             String clientIp = socket.getLocalAddress().toString();
-            byte[] bytesToSend = clientIp.getBytes(StandardCharsets.UTF_8);
+            String message = clientIp + ";" + "1" + ";" + "file1" + ";" + "file2";
+            byte[] bytesToSend = message.getBytes(StandardCharsets.UTF_8);
             outputStream.write(bytesToSend);
             outputStream.flush();
 
@@ -29,11 +30,6 @@ public class Client {
                 String input = scanner.nextLine();
 
                 if (input.equalsIgnoreCase("q")) {
-                    //Messagem de disconect 
-                    String disconectMessage = socket.getLocalAddress().toString();
-                    byte[] messageBytes = disconectMessage.getBytes(StandardCharsets.UTF_8);
-                    outputStream.write(messageBytes);
-                    outputStream.flush();
                     break;
                 }
 
