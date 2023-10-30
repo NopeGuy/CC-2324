@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -69,6 +70,7 @@ public class Server {
                 e.printStackTrace();
             }
         }
+        scanner.close();
     }
 
     private static void displayClientFiles() {
@@ -91,6 +93,8 @@ public class Server {
         public void run() {
             try {
                 InputStream inputStream = clientSocket.getInputStream();
+                OutputStream outputStream = clientSocket.getOutputStream();
+                
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
@@ -103,8 +107,8 @@ public class Server {
                         continue;
                     }
 
-                    String ip = parts[0];
-                    String requestType = parts[1];
+                    String requestType = parts[0];
+                    String ip = parts[1];
                     String requestInfo = parts[2];
 
                     if (requestType.equals("1")) {
@@ -114,8 +118,22 @@ public class Server {
                         }
                         clientFilesMap.put(ip, files);
                         System.out.println("Received files for IP " + ip + ": " + files);
-                    } else if (requestType.equals("REQUEST")) {
-                        System.out.println("Request info for IP " + ip + ": " + requestInfo);
+                    }
+                    if (requestType.equals("2")) {
+                        String requestInfoToFind = requestInfo; // Request info to find
+
+                        for (Map.Entry<String, List<String>> entry : clientFilesMap.entrySet()) {
+                            String clientIP = entry.getKey();
+                            List<String> clientFiles = entry.getValue();
+
+                            // Check if the client has the requested file
+                            if (clientFiles.contains(requestInfoToFind)) {
+                                String message = "Client IP: " + clientIP + " has the requested file: " + requestInfoToFind;
+                                byte[] bytesToSend = message.getBytes(StandardCharsets.UTF_8);
+                                outputStream.write(bytesToSend);
+                                outputStream.flush();
+                            }
+                        }
                     }
                 }
 
