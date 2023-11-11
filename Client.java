@@ -4,14 +4,20 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.net.Socket;
 import java.util.Scanner;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 public class Client {
 
-    private static final String SERVER_ADDRESS = "127.0.0.1"; // Server IP address
+    private static final String SERVER_ADDRESS = "127.00.00.01"; // Server IP address
     private static final int SERVER_PORT = 9090; // Server port
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        String message;
 
         try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
                 InputStream inputStream = socket.getInputStream();
@@ -22,10 +28,94 @@ public class Client {
             // Get the client IP
             String clientIp = socket.getInetAddress().getHostAddress();
 
-            String message = "1" + ";" + clientIp + ";" + "file1" + ";" + "file2";
-            byte[] ack = message.getBytes(StandardCharsets.UTF_8);
-            outputStream.write(ack);
-            outputStream.flush();
+            // RT ; IP ; Payload ?
+            // RT -> Request Type = 1 byte
+            // IP = 15 bytes
+            // Payload -> File_name ! nº_blocks : File_name ! nº_blocks
+            // ? -> Delimitador Final 
+
+            StringBuilder messageBuilder = new StringBuilder();
+            StringBuilder messageBuilderBlocks = new StringBuilder();
+            messageBuilder.append("1").append(";").append(clientIp).append(";");
+            messageBuilderBlocks.append("4").append(";").append(clientIp).append(";");
+
+            File clientFilesFolder = new File("ClientFiles");
+            File[] files = clientFilesFolder.listFiles();
+
+
+            // Fragmentação dos ficheiros em blocos
+
+            if (files != null) {
+                for (File file : files) {
+                    if (file.isFile() && !file.getName().contains("«")) {
+                        String fileName = file.getName();
+                        String path = "./ClientFiles/" + fileName;
+                        Path pathFile = Paths.get("./ClientFiles/" + fileName);
+                        long fileSize = Files.size(pathFile);
+
+                        int numBlocks;
+                        if (fileSize % 1007 == 0) {
+                            numBlocks = (int) (fileSize / 1007);
+                        } else {
+                            numBlocks = ((int) (fileSize / 1007)) + 1;
+                        }
+
+                        int blocksNumber = Methods.fileSplitter(fileName, path, numBlocks);
+                        System.out
+                                .println("O ficheiro " + fileName + " foi fragmentado em " + blocksNumber + " blocos");
+
+                    }
+                }
+            }
+
+            // -------------------------------------------------------------
+            // Parse and send the client's files to the server
+            if (files != null) {
+                for (File file : files) {
+                    //checks if file name contains »« so it considers them as a block of a file
+                    if (file.isFile() && !file.getName().contains("«")) {
+                        String fileName = file.getName();
+                        Path path = Paths.get("./ClientFiles/" + fileName);
+                        long fileSize = Files.size(path);
+                        int numBlocks;
+                        if(fileSize % 1007 == 0){
+                            numBlocks = (int) (fileSize / 1007);
+                        }else{
+                            numBlocks = ((int) (fileSize / 1007)) + 1;
+                        }
+
+                        messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
+                    }
+                    else{
+                        String fileName = file.getName();
+                        messageBuilderBlocks.append(fileName).append("|");
+                    }
+                }
+
+                messageBuilder.deleteCharAt(messageBuilder.length() - 1);
+
+                message = messageBuilder.toString();
+
+                //debug
+                System.out.println(message);
+
+                byte[] ack = message.getBytes(StandardCharsets.UTF_8);
+                outputStream.write(ack);
+                outputStream.flush();
+
+                message = messageBuilderBlocks.toString();
+
+                //debug
+                System.out.println(message);
+
+                byte[] ack2 = message.getBytes(StandardCharsets.UTF_8);
+                outputStream.write(ack2);
+                outputStream.flush();
+
+            } else {
+                System.out.println("No files found in the 'ClientFiles' folder.");
+            }
+            // -------------------------------------------------------------
 
             // Start a loop to allow the user to choose options
             while (true) {
@@ -40,7 +130,7 @@ public class Client {
                 if (choice == 1) {
                     System.out.println("Enter the file name:");
                     String file = scanner.nextLine();
-                    message = "2" + ";" + clientIp + ";" + file;
+                    message = "3" + ";" + clientIp + ";" + file;
                     byte[] userRequestBytes = message.getBytes(StandardCharsets.UTF_8);
                     outputStream.write(userRequestBytes);
                     outputStream.flush();
