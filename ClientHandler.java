@@ -52,12 +52,39 @@ public class ClientHandler implements Runnable {
                 }
 
                 if (requestType.equals("2")) {
+                    String[] blockInfo = requestInfo.split("\\|");
 
+                    for (String block : blockInfo) {
+                        String[] blockParts = block.split("«");
+                        String fileName = blockParts[0];
+                        String blockNumber = blockParts[1];
+
+                        // Check if the file already exists in the map, if not, create a new entry
+                        if (!clientBlockFilesMap.containsKey(fileName)) {
+                            clientBlockFilesMap.put(fileName, new ArrayList<>());
+                        }
+
+                        // Get the blocks associated with the file and add the new block
+                        List<String> blocks = clientBlockFilesMap.get(fileName);
+                        blocks.add(blockNumber);
+
+                        // Update the block information for this file
+                        clientBlockFilesMap.put(fileName, blocks);
+                    }
+
+                    // debug
+                    System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
+                
                 }
 
                 // info request
                 // Inside the run() method where requestType 3 is handled
                 if (requestType.equals("3")) {
+                    //reroute the transfer
+                    
+                }
+
+                if (requestType.equals("4")) {
                     String requestInfoToFind = requestInfo; // Request info to find
 
                     for (Map.Entry<String, List<String>> entry : clientFilesMap.entrySet()) {
@@ -92,33 +119,7 @@ public class ClientHandler implements Runnable {
                             outputStream.flush();
                         }
                     }
-                }
 
-                // blocks
-                // Inside the run() method where requestType 4 is handled
-                if (requestType.equals("4")) {
-                    String[] blockInfo = requestInfo.split("\\|");
-
-                    for (String block : blockInfo) {
-                        String[] blockParts = block.split("«");
-                        String fileName = blockParts[0];
-                        String blockNumber = blockParts[1];
-
-                        // Check if the file already exists in the map, if not, create a new entry
-                        if (!clientBlockFilesMap.containsKey(fileName)) {
-                            clientBlockFilesMap.put(fileName, new ArrayList<>());
-                        }
-
-                        // Get the blocks associated with the file and add the new block
-                        List<String> blocks = clientBlockFilesMap.get(fileName);
-                        blocks.add(blockNumber);
-
-                        // Update the block information for this file
-                        clientBlockFilesMap.put(fileName, blocks);
-                    }
-
-                    // debug
-                    System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
                 }
             }
 

@@ -4,15 +4,19 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.net.Socket;
 import java.util.Scanner;
+
+import Client.Mediator;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import pack.FMethods;
 
 public class Client {
 
-    private static final String SERVER_ADDRESS = "127.00.00.01"; // Server IP address
+    private static final String SERVER_ADDRESS = "127.000.000.001"; // Server IP address
     private static final int SERVER_PORT = 9090; // Server port
 
     public static void main(String[] args) {
@@ -32,16 +36,15 @@ public class Client {
             // RT -> Request Type = 1 byte
             // IP = 15 bytes
             // Payload -> File_name ! nº_blocks : File_name ! nº_blocks
-            // ? -> Delimitador Final 
+            // ? -> Delimitador Final
 
             StringBuilder messageBuilder = new StringBuilder();
             StringBuilder messageBuilderBlocks = new StringBuilder();
             messageBuilder.append("1").append(";").append(clientIp).append(";");
-            messageBuilderBlocks.append("4").append(";").append(clientIp).append(";");
+            messageBuilderBlocks.append("2").append(";").append(clientIp).append(";");
 
             File clientFilesFolder = new File("ClientFiles");
             File[] files = clientFilesFolder.listFiles();
-
 
             // Fragmentação dos ficheiros em blocos
 
@@ -60,9 +63,8 @@ public class Client {
                             numBlocks = ((int) (fileSize / 1007)) + 1;
                         }
 
-                        int blocksNumber = Methods.fileSplitter(fileName, path, numBlocks);
-                        System.out
-                                .println("O ficheiro " + fileName + " foi fragmentado em " + blocksNumber + " blocos");
+                        int blocksNumber = FMethods.fileSplitter(fileName, path, numBlocks);
+                        System.out.println("O ficheiro " + fileName + " foi fragmentado em " + blocksNumber + " blocos");
 
                     }
                 }
@@ -72,21 +74,20 @@ public class Client {
             // Parse and send the client's files to the server
             if (files != null) {
                 for (File file : files) {
-                    //checks if file name contains »« so it considers them as a block of a file
+                    // checks if file name contains »« so it considers them as a block of a file
                     if (file.isFile() && !file.getName().contains("«")) {
                         String fileName = file.getName();
                         Path path = Paths.get("./ClientFiles/" + fileName);
                         long fileSize = Files.size(path);
                         int numBlocks;
-                        if(fileSize % 1007 == 0){
+                        if (fileSize % 1007 == 0) {
                             numBlocks = (int) (fileSize / 1007);
-                        }else{
+                        } else {
                             numBlocks = ((int) (fileSize / 1007)) + 1;
                         }
 
                         messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
-                    }
-                    else{
+                    } else {
                         String fileName = file.getName();
                         messageBuilderBlocks.append(fileName).append("|");
                     }
@@ -96,7 +97,7 @@ public class Client {
 
                 message = messageBuilder.toString();
 
-                //debug
+                // debug
                 System.out.println(message);
 
                 byte[] ack = message.getBytes(StandardCharsets.UTF_8);
@@ -105,7 +106,7 @@ public class Client {
 
                 message = messageBuilderBlocks.toString();
 
-                //debug
+                // debug
                 System.out.println(message);
 
                 byte[] ack2 = message.getBytes(StandardCharsets.UTF_8);
@@ -115,6 +116,10 @@ public class Client {
             } else {
                 System.out.println("No files found in the 'ClientFiles' folder.");
             }
+
+            // Create a thread for the Mediator functionality
+            Thread mediatorThread = new Thread(new Mediator(inputStream));
+            mediatorThread.start(); // Start the thread
             // -------------------------------------------------------------
 
             // Start a loop to allow the user to choose options
@@ -130,19 +135,19 @@ public class Client {
                 if (choice == 1) {
                     System.out.println("Enter the file name:");
                     String file = scanner.nextLine();
-                    message = "3" + ";" + clientIp + ";" + file;
+                    message = "4" + ";" + clientIp + ";" + file;
                     byte[] userRequestBytes = message.getBytes(StandardCharsets.UTF_8);
                     outputStream.write(userRequestBytes);
                     outputStream.flush();
 
-                    // Read and display the server's response
-                    byte[] responseBuffer = new byte[1024];
-                    int bytesRead = inputStream.read(responseBuffer);
+                    // // Read and display the server's response
+                    // byte[] responseBuffer = new byte[1024];
+                    // int bytesRead = inputStream.read(responseBuffer);
 
-                    if (bytesRead > 0) {
-                        String response = new String(responseBuffer, 0, bytesRead, StandardCharsets.UTF_8);
-                        System.out.println(response);
-                    }
+                    // if (bytesRead > 0) {
+                    //     String response = new String(responseBuffer, 0, bytesRead, StandardCharsets.UTF_8);
+                    //     System.out.println(response);
+                    // }
                 } else if (choice == 2) {
                     // Add code for file download option
                 } else if (choice == 3) {
