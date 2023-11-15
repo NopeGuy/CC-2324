@@ -16,7 +16,7 @@ import pack.FMethods;
 
 public class Client {
 
-    private static final String SERVER_ADDRESS = "127.000.000.001"; // Server IP address
+    private static final String SERVER_ADDRESS = "10.0.0.10"; // Server IP address
     private static final int SERVER_PORT = 9090; // Server port
 
     public static void main(String[] args) {
@@ -31,6 +31,7 @@ public class Client {
 
             // Get the client IP
             String clientIp = socket.getInetAddress().getHostAddress();
+            clientIp = FMethods.transformToFullIP(clientIp);
 
             // RT ; IP ; Payload ?
             // RT -> Request Type = 1 byte
@@ -72,6 +73,7 @@ public class Client {
 
             // -------------------------------------------------------------
             // Parse and send the client's files to the server
+            files = clientFilesFolder.listFiles();
             if (files != null) {
                 for (File file : files) {
                     // checks if file name contains »« so it considers them as a block of a file
@@ -139,17 +141,14 @@ public class Client {
                     byte[] userRequestBytes = message.getBytes(StandardCharsets.UTF_8);
                     outputStream.write(userRequestBytes);
                     outputStream.flush();
-
-                    // // Read and display the server's response
-                    // byte[] responseBuffer = new byte[1024];
-                    // int bytesRead = inputStream.read(responseBuffer);
-
-                    // if (bytesRead > 0) {
-                    //     String response = new String(responseBuffer, 0, bytesRead, StandardCharsets.UTF_8);
-                    //     System.out.println(response);
-                    // }
                 } else if (choice == 2) {
                     // Add code for file download option
+                    System.out.println("Enter the file name:");
+                    String file = scanner.nextLine();
+                    message = "3" + ";" + clientIp + ";" + file;
+                    byte[] userRequestBytes = message.getBytes(StandardCharsets.UTF_8);
+                    outputStream.write(userRequestBytes);
+                    outputStream.flush();
                 } else if (choice == 3) {
                     break;
                 } else {

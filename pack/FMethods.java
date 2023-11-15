@@ -5,10 +5,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 public class FMethods {
 
@@ -54,80 +56,96 @@ public class FMethods {
         return (-1);
     }
 
-    public static void FileSender(String filePath) {
+    public static void FileSender(String filePath, String ip) {
         try {
             DatagramSocket socket = new DatagramSocket();
-            int receiverPort = 9090;
+            InetAddress receiverAddress = InetAddress.getByName(ip);
 
-            File file = new File(filePath);
-            FileInputStream fileInputStream = new FileInputStream(file);
+            // Read file into bytes
+            byte[] fileData = Files.readAllBytes(Paths.get(filePath));
 
-            byte[] fileData = new byte[1024]; // Reading a sequence of 1024 bytes
-            int bytesRead = fileInputStream.read(fileData);
+            // Hash the file content
+            byte[] hashCode = generateMD5(fileData);
 
-            if (bytesRead >= 30) {
-                // Extract the initial 30 bytes as "ip;data_to_send"
-                byte[] ipDataBytes = new byte[30];
-                byte[] dataToSendBytes = new byte[bytesRead - 30];
-                System.arraycopy(fileData, 0, ipDataBytes, 0, 30);                System.arraycopy(fileData, 0, ipDataBytes, 0, 30);
-                System.arraycopy(fileData, 31, dataToSendBytes, 0, bytesRead - 30);
-                String ipData = new String(ipDataBytes); // Convert the bytes to a string
+            //String Filename
+            String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+            //fill the name until it occupies 30 bytes
+            while (fileName.length() < 15) {
+                fileName += " ";
+            }
 
-                // Perform other operations with the extracted dataToSend and IP
-                // Example: Sending a UDP packet with the data to send
+            // Create header with requestType;IP;HashCode;Filename
+            String header = String.format("1;%s;%s;%s;", ip, hashCode, fileName);
 
-                InetAddress receiverAddress = InetAddress.getByName(ipData);
-                DatagramPacket packet = new DatagramPacket(dataToSendBytes, dataToSendBytes.length, receiverAddress, receiverPort);
-                socket.send(packet);
-                System.out.println("Sent packet with the data to send to IP: " + ipData);
+            // Combine header and file data
+            byte[] dataToSendBytes = new byte[header.length() + fileData.length];
+            System.arraycopy(header.getBytes(StandardCharsets.UTF_8), 0, dataToSendBytes, 0, header.length());
+            System.arraycopy(fileData, 0, dataToSendBytes, header.length(), fileData.length);
+
+            // Send UDP packet with file data
+            DatagramPacket packet = new DatagramPacket(dataToSendBytes, dataToSendBytes.length, receiverAddress, 9090);
+            socket.send(packet);
+		
+	    System.out.println(fileName);
+            System.out.println("Sent file to IP: " + ip);
+
+            socket.close();
+        } catch (IOException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void FileReceiver(String filePath, String ip, byte[] hashCode, byte[] payload) {
+        try {
+                try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                    fos.write(payload);
+                    System.out.println("File received and saved: " + filePath);
+                }
+
+            // Check if the received hash code matches the expected hash code
+            if (Arrays.equals(generateMD5(payload), hashCode)) {
+                // Write payload (file content) to the specified file path
 
             } else {
-                System.out.println("File doesn't contain enough bytes to extract IP and data to send.");
+                System.out.println("Received file hash code doesn't match the expected hash code.");
             }
-
-            fileInputStream.close();
-            socket.close();
-        } catch (IOException e) {
+        } catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
 
-    public static void FileReceiver(String[] args) {
-        try {
-            DatagramSocket socket = new DatagramSocket(9090);
-            byte[] buffer = new byte[1024];
-
-            File file = new File("receivedFile.txt");
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-
-            while (true) {
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
-
-                fileOutputStream.write(packet.getData(), 0, packet.getLength());
-
-                if (packet.getLength() < buffer.length) {
-                    break;
-                }
-            }
-
-            fileOutputStream.close();
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static String generateMD5(String filePath) throws NoSuchAlgorithmException, IOException {
+    // Helper method to generate MD5 hash
+    private static byte[] generateMD5(byte[] data) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
-
-        byte[] fileBytes = Files.readAllBytes(Paths.get(filePath));
-        byte[] hashBytes = md.digest(fileBytes);
-
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashBytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
+        return md.digest(data);
     }
+
+
+    public static String transformToFullIP(String ip) {
+        // Split the IP address into its segments
+        String[] segments = ip.split("\\.");
+
+        // Create a StringBuilder to build the transformed IP
+        StringBuilder fullIP = new StringBuilder();
+
+        for (int i = 0; i < segments.length; i++) {
+            String segment = segments[i];
+
+            // Pad each segment with leading zeros to make it three digits
+            while (segment.length() < 3) {
+                segment = "0" + segment;
+            }
+
+            // Append the formatted segment to the full IP
+            fullIP.append(segment);
+
+            // Add a dot to separate segments, but not after the last one
+            if (i < segments.length - 1) {
+                fullIP.append(".");
+            }
+        }
+
+        return fullIP.toString();
+    }
+
 }

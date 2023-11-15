@@ -1,12 +1,13 @@
-import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.IOException;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 public class Server {
 
     private static final int PORT = 9090;
+    private static final int BACKLOG = 50;
+    private static final String DEFAULT_ADDRESS = "0.0.0.0"; // Default to bind to all network interfaces
     private static volatile boolean isRunning = true;
     private static Map<String, List<String>> clientFilesMap = new HashMap<>();
     private static Map<String, List<String>> clientBlockFilesMap = new HashMap<>();
@@ -14,8 +15,8 @@ public class Server {
     public static void main(String[] args) {
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server listening on port " + PORT);
+        try (ServerSocket serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getByName(getLocalIPAddress()))) {
+            System.out.println("Server listening on " + serverSocket.getInetAddress().getHostAddress() + " port " + PORT);
 
             // Start a thread to handle the menu
             Thread menuThread = new Thread(Server::startMenu);
@@ -41,17 +42,13 @@ public class Server {
         while (isRunning) {
             try {
                 System.out.println("\nMenu:");
-                System.out.println("1. Display client files");
-                System.out.println("2. Exit\n");
+                System.out.println("1. Exit\n");
 
                 int choice = scanner.nextInt();
                 scanner.nextLine();  // Consume newline
 
                 switch (choice) {
                     case 1:
-                        displayClientFiles();
-                        break;
-                    case 2:
                         System.out.println("Exiting the server.");
                         isRunning = false;
                         System.exit(0);
@@ -66,31 +63,25 @@ public class Server {
         scanner.close();
     }
 
-    private static void displayClientFiles() {
-        System.out.println("\n\n#################\n# Client Files and Blocks: #\n#################\n");
-        for (Map.Entry<String, List<String>> entry : clientFilesMap.entrySet()) {
-            System.out.println("Client: " + entry.getKey());
-            System.out.println("Files: " + entry.getValue());
+    private static String getLocalIPAddress() throws SocketException {
+        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
-            // Retrieve blocks associated with the files
-            List<String> blocks = new ArrayList<>();
-            for (String file : entry.getValue()) {
-                List<String> fileBlocks = clientBlockFilesMap.get(file);
-                if (fileBlocks != null) {
-                    blocks.add("File: " + file + " Blocks: " + fileBlocks);
+        while (networkInterfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = networkInterfaces.nextElement();
+
+            if (networkInterface.isUp() && !networkInterface.isLoopback()) {
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+
+                while (addresses.hasMoreElements()) {
+                    InetAddress address = addresses.nextElement();
+
+                    if (address instanceof Inet4Address) {
+                        return address.getHostAddress();
+                    }
                 }
             }
-
-            if (!blocks.isEmpty()) {
-                System.out.println("Blocks:");
-                for (String blockInfo : blocks) {
-                    System.out.println(blockInfo);
-                }
-            } else {
-                System.out.println("No blocks information available.");
-            }
-            System.out.println("--------");
         }
-    }
 
+        return DEFAULT_ADDRESS; // Default to binding to all network interfaces
+    }
 }
