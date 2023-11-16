@@ -63,8 +63,8 @@ public class FMethods {
             byte[] fileData = Files.readAllBytes(Paths.get(filePath));
 
             // Hash the file content
-            byte[] hashCode = generateMD5(fileData);
-
+            byte[] hashCode = generateMD5(fileData, fileData.length);
+            
             // Extract the filename from the full path
             String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
             System.out.println("Filename inside FileSender: " + fileName);
@@ -96,7 +96,6 @@ public class FMethods {
             // Add hashCode
             System.arraycopy(hashCode, 0, dataToSendBytes, 46, 16);
 
-            
             // Add fileData
             System.arraycopy(fileData, 0, dataToSendBytes, headerLength, fileData.length);
 
@@ -114,13 +113,16 @@ public class FMethods {
 
     public static void FileReceiver(String filePath, byte[] hashCode, byte[] payload) {
         try {
+            // Find the actual length of the payload by searching for the first zero byte
+            int payloadLength = findNullByteIndex(payload);
+
             try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                int headerSize = 62;
-                fos.write(payload, headerSize, payload.length - headerSize);
+                fos.write(payload, 0, payloadLength);
                 System.out.println("File received and saved: " + filePath);
             }
+
             // Check if the received hash code matches the expected hash code
-            if (Arrays.equals(generateMD5(payload), hashCode)) {
+            if (Arrays.equals(generateMD5(payload, payloadLength), hashCode)) {
                 System.out.println("Received file hash code is gucci.");
             } else {
                 System.out.println("Received file hash code doesn't match the expected hash code.");
@@ -130,10 +132,20 @@ public class FMethods {
         }
     }
 
+    // Helper method to find the index of the first zero byte in a byte array
+    private static int findNullByteIndex(byte[] array) {
+        int index = 0;
+        while (index < array.length && array[index] != 0) {
+            index++;
+        }
+        return index;
+    }
+
     // Helper method to generate MD5 hash
-    private static byte[] generateMD5(byte[] data) throws NoSuchAlgorithmException {
+    private static byte[] generateMD5(byte[] data, int length) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
-        return md.digest(data);
+        md.update(data, 0, length); // Update with only the actual data
+        return md.digest();
     }
 
     public static String transformToFullIP(String ip) {
