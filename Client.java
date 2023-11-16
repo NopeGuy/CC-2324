@@ -58,10 +58,10 @@ public class Client {
                         long fileSize = Files.size(pathFile);
 
                         int numBlocks;
-                        if (fileSize % 1007 == 0) {
-                            numBlocks = (int) (fileSize / 1007);
+                        if (fileSize % 962 == 0) {
+                            numBlocks = (int) (fileSize / 962);
                         } else {
-                            numBlocks = ((int) (fileSize / 1007)) + 1;
+                            numBlocks = ((int) (fileSize / 962)) + 1;
                         }
 
                         int blocksNumber = FMethods.fileSplitter(fileName, path, numBlocks);
@@ -82,10 +82,10 @@ public class Client {
                         Path path = Paths.get("./ClientFiles/" + fileName);
                         long fileSize = Files.size(path);
                         int numBlocks;
-                        if (fileSize % 1007 == 0) {
-                            numBlocks = (int) (fileSize / 1007);
+                        if (fileSize % 962 == 0) {
+                            numBlocks = (int) (fileSize / 958);
                         } else {
-                            numBlocks = ((int) (fileSize / 1007)) + 1;
+                            numBlocks = ((int) (fileSize / 958)) + 1;
                         }
 
                         messageBuilder.append(fileName).append("!").append(numBlocks).append(":");

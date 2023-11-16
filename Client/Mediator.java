@@ -88,26 +88,18 @@ public class Mediator implements Runnable {
                         // Now clientsWithBlocks contains the IP addresses and their associated blocks
                         System.out.println("Blocks Information Updated: " + clientsWithBlocks);
 
-                        // Join all clientsWithBlocks in a string and convert them to bytes after
-                        // prepending "1;"
-
                         // Test change later
-                        // Get first IP from clientsWithBlocks to test
-                        String IP = clientsWithBlocks.keySet().iterator().next();
-                        // Get own IP
-                        String ownIP = java.net.InetAddress.getLocalHost().getHostAddress();
-                        // Transform IP to inet address
-                        java.net.InetAddress Inetip = java.net.InetAddress.getByName(IP);
-                        // Get first block with that IP
-                        String blockName = clientsWithBlocks.get(IP).get(0);
-                        //fill name until 30 bytes
-                        while (blockName.length() < 15) {
-                            blockName += " ";
-                        }
-                        String toReceive = "2" + ";" + ownIP + ";" + blockName;
+                        //__________________________________________________________________________________
+                        String IP = "010.000.000.002";
+                        String SenderIP = "010.000.000.001";
+                        // transform IP to inet address
+                        java.net.InetAddress Inetip = java.net.InetAddress.getByName(SenderIP);
+                        String blockName = "diogo.txt«0001";
+                        //__________________________________________________________________________________
 
+                        // Send the IP address and block name to the other node
+                        String toReceive = "2" + IP + blockName;
                         byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-
                         // send message to other node to start up the sending process
                         DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
                         udpSocket.send(packet);

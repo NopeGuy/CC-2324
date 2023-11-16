@@ -13,37 +13,35 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 public class FMethods {
-
     public static int fileSplitter(String fileName, String filePath, int numBlocks) {
         String outputDir = "./ClientFiles/";
-        int blockSize = 1007; // Tamanho do bloco em bytes
+        int blockSize = 962;
 
         File inputFile = new File(filePath);
 
         try (FileInputStream fis = new FileInputStream(inputFile)) {
             byte[] buffer = new byte[blockSize];
             int bytesRead;
-            int blockNumber = 1; // Inicia o número do bloco em 1
+            int blockNumber = 1;
 
-            long fileSize = inputFile.length(); // Obtém o tamanho real do arquivo
+            long fileSize = inputFile.length();
 
             for (int i = 0; i < numBlocks - 1; i++) {
                 bytesRead = fis.read(buffer, 0, blockSize);
 
-                String blockFileName = String.format(outputDir + "%s«%04d", fileName, blockNumber);
-                try (FileOutputStream fos = new FileOutputStream(blockFileName)) {
+                String blockFileName = String.format("%s«%04d", fileName, blockNumber);
+                try (FileOutputStream fos = new FileOutputStream(outputDir + blockFileName)) {
                     fos.write(buffer, 0, bytesRead);
                 }
 
                 blockNumber++;
             }
 
-            // Trata o último bloco
             int remainingBytes = (int) (fileSize % blockSize);
             bytesRead = fis.read(buffer, 0, remainingBytes);
 
-            String lastBlockFileName = String.format(outputDir + "%s«%04d", fileName, blockNumber);
-            try (FileOutputStream fos = new FileOutputStream(lastBlockFileName)) {
+            String lastBlockFileName = String.format("%s«%04d", fileName, blockNumber);
+            try (FileOutputStream fos = new FileOutputStream(outputDir + lastBlockFileName)) {
                 fos.write(buffer, 0, bytesRead);
             }
 
@@ -53,7 +51,7 @@ public class FMethods {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return (-1);
+        return -1;
     }
 
     public static void FileSender(String filePath, String ip) {
@@ -67,26 +65,45 @@ public class FMethods {
             // Hash the file content
             byte[] hashCode = generateMD5(fileData);
 
-            //String Filename
-            String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-            //fill the name until it occupies 30 bytes
-            while (fileName.length() < 15) {
-                fileName += " ";
-            }
+            // Extract the filename from the full path
+            String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
+            System.out.println("Filename inside FileSender: " + fileName);
+
+            // Ensure the filename length is exactly 30 characters
+            fileName = padString(fileName, 30);
+            System.out.println("Filename inside after padding FileSender: " + fileName);
 
             // Create header with requestType;IP;HashCode;Filename
-            String header = String.format("1;%s;%s;%s;", ip, hashCode, fileName);
+            byte[] ipBytes = Arrays.copyOf(ip.getBytes(StandardCharsets.UTF_8), 15);
+            byte[] fileNameBytes = Arrays.copyOf(fileName.getBytes(StandardCharsets.UTF_8), 30);
+
+            // Calculate the total length of the header
+            int headerLength = 1 + ipBytes.length + hashCode.length + fileNameBytes.length;
+            System.out.println("Header length: " + headerLength);
 
             // Combine header and file data
-            byte[] dataToSendBytes = new byte[header.length() + fileData.length];
-            System.arraycopy(header.getBytes(StandardCharsets.UTF_8), 0, dataToSendBytes, 0, header.length());
-            System.arraycopy(fileData, 0, dataToSendBytes, header.length(), fileData.length);
+            byte[] dataToSendBytes = new byte[headerLength + fileData.length];
+
+            // Add requestType
+            dataToSendBytes[0] = '1';
+
+            // Add IP
+            System.arraycopy(ipBytes, 0, dataToSendBytes, 1, 15);
+
+            // Add fileName
+            System.arraycopy(fileNameBytes, 0, dataToSendBytes, 16, 30);
+
+            // Add hashCode
+            System.arraycopy(hashCode, 0, dataToSendBytes, 46, 16);
+
+            
+            // Add fileData
+            System.arraycopy(fileData, 0, dataToSendBytes, headerLength, fileData.length);
 
             // Send UDP packet with file data
             DatagramPacket packet = new DatagramPacket(dataToSendBytes, dataToSendBytes.length, receiverAddress, 9090);
             socket.send(packet);
-		
-	    System.out.println(fileName);
+
             System.out.println("Sent file to IP: " + ip);
 
             socket.close();
@@ -95,17 +112,16 @@ public class FMethods {
         }
     }
 
-    public static void FileReceiver(String filePath, String ip, byte[] hashCode, byte[] payload) {
+    public static void FileReceiver(String filePath, byte[] hashCode, byte[] payload) {
         try {
-                try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                    fos.write(payload);
-                    System.out.println("File received and saved: " + filePath);
-                }
-
+            try (FileOutputStream fos = new FileOutputStream(filePath)) {
+                int headerSize = 62;
+                fos.write(payload, headerSize, payload.length - headerSize);
+                System.out.println("File received and saved: " + filePath);
+            }
             // Check if the received hash code matches the expected hash code
             if (Arrays.equals(generateMD5(payload), hashCode)) {
-                // Write payload (file content) to the specified file path
-
+                System.out.println("Received file hash code is gucci.");
             } else {
                 System.out.println("Received file hash code doesn't match the expected hash code.");
             }
@@ -119,7 +135,6 @@ public class FMethods {
         MessageDigest md = MessageDigest.getInstance("MD5");
         return md.digest(data);
     }
-
 
     public static String transformToFullIP(String ip) {
         // Split the IP address into its segments
@@ -148,4 +163,13 @@ public class FMethods {
         return fullIP.toString();
     }
 
+    public static String padString(String originalString, int fixedSize) {
+        // Ensure the string is not longer than the fixed size
+        if (originalString.length() > fixedSize) {
+            throw new IllegalArgumentException("String is too long");
+        }
+
+        // Pad the string to the right with spaces
+        return String.format("%-" + fixedSize + "s", originalString);
+    }
 }
