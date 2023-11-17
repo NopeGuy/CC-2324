@@ -59,4 +59,4 @@ Notes
 
 Contributors
 
-    [Luís Ferreira]
+    Luís Ferreira a.k.a. NopeGuy
