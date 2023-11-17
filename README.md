@@ -17,17 +17,20 @@ The server listens for incoming connections from clients, manages client files a
 
 Usage:
 
-<pre>
 ```
 java Server
 ```
-</pre>
 
 
 ### Client
 
 Clients connect to the server, share their files, and interact with the distributed file system through a console menu. Also they have a mediator thread that manages the UDP communication between themselves, ensuring efficient exchange of block information.
 
+Usage:
+
+```
+java Client
+```
 
 ## How to Use
 
