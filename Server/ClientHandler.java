@@ -50,7 +50,7 @@ public class ClientHandler implements Runnable {
                         files.add(ip);
                         clientFilesMap.put(filesName[0], files);
                     }
-                    System.out.println("1;" + "Received files for IP " + ip + ": " + clientFilesMap);
+                    System.out.println("Received files for IP " + ip + ": " + clientFilesMap);
                 }
 
                 if (requestType.equals("2")) {
@@ -70,7 +70,7 @@ public class ClientHandler implements Runnable {
                         clientBlockFilesMap.put(fileName, blocks);
                     }
 
-                    System.out.println("1;" + "Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
+                    System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
                 }
 
                 if (requestType.equals("3")) {
@@ -117,7 +117,6 @@ public class ClientHandler implements Runnable {
                     }
                 }
             }
-
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();

@@ -47,7 +47,6 @@ public class Mediator implements Runnable {
             }).start();
 
             while (true) {
-                // Check for data from the client
                 byte[] buffer = new byte[1024];
                 int bytesRead = clientInput.read(buffer);
 
@@ -57,14 +56,13 @@ public class Mediator implements Runnable {
                     // Debug
                     System.out.println("First Byte: " + firstByte);
 
-                    // Handle data from the client (as before)
                     if (firstByte.equals("1")) {
-                        // Handle request type "1"
+                        // Handle request type "1" - Message from Server
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
                         Thread.sleep(100);
                         System.out.println("Message from Server: " + receivedData);
                     } else if (firstByte.equals("2")) {
-                        // Handle request type "2"
+                        // Handle request type "2" - Update blocks information
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
                         System.out.println("Received data: " + receivedData);
 
@@ -79,16 +77,15 @@ public class Mediator implements Runnable {
                                 String ipAddress = blockInfo[1]; // Extracting IP address
 
                                 // Store blocks associated with IP addresses
-                                clientsWithBlocks
-                                        .computeIfAbsent(ipAddress, k -> new ArrayList<>())
-                                        .add(blockNumber);
+                                clientsWithBlocks.computeIfAbsent(ipAddress, k -> new ArrayList<>()).add(blockNumber);
                             }
                         }
 
                         // Now clientsWithBlocks contains the IP addresses and their associated blocks
                         System.out.println("Blocks Information Updated: " + clientsWithBlocks);
 
-                        // Test change later
+                        // Test change later to get the IP address of the best nodes to download each block
+                        // Iterate to send the best for each block
                         //__________________________________________________________________________________
                         String IP = "010.000.000.002";
                         String SenderIP = "010.000.000.001";
@@ -100,9 +97,11 @@ public class Mediator implements Runnable {
                         // Send the IP address and block name to the other node
                         String toReceive = "2" + IP + blockName;
                         byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-                        // send message to other node to start up the sending process
+                        // Send message to other node to start up the sending process
                         DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
                         udpSocket.send(packet);
+                        //__________________________________________________________________________________
+                        
                     } else {
                         System.out.println("Invalid header format.");
                     }
