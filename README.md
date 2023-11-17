@@ -17,7 +17,15 @@ The server listens for incoming connections from clients, manages client files a
 
 Usage:
 
-java Server
+<pre>
+```bash
+public class Example {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+```
+</pre>
 
 
 ### Client
