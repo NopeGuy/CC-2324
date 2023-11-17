@@ -18,12 +18,8 @@ The server listens for incoming connections from clients, manages client files a
 Usage:
 
 <pre>
-```bash
-public class Example {
-    public static void main(String[] args) {
-        System.out.println("Hello, World!");
-    }
-}
+```
+java Server
 ```
 </pre>
 
