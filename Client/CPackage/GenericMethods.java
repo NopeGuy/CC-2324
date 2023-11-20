@@ -1,5 +1,7 @@
 package CPackage;
 
+import java.nio.ByteBuffer;
+
 public class GenericMethods {
     
     public static String transformToFullIP(String ip) {
@@ -39,5 +41,15 @@ public class GenericMethods {
         // Pad the string to the right with spaces
         return String.format("%-" + fixedSize + "s", originalString);
     }
+
+        public static byte[] longToBytes(long value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(value);
+        return buffer.array();
+    }
     
+    public static long bytesToLong(byte[] bytes) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        return buffer.getLong();
+    }
 }

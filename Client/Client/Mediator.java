@@ -13,6 +13,7 @@ import java.util.Map;
 public class Mediator implements Runnable {
     private InputStream clientInput;
     private DatagramSocket udpSocket;
+    private Thread udpWorkerThread;
 
     public Mediator(InputStream clientInputStream) {
         this.clientInput = clientInputStream;
@@ -30,21 +31,21 @@ public class Mediator implements Runnable {
             System.out.println("Mediator is listening...");
 
             // Create a worker thread to handle UDP reception
-            new Thread(() -> {
+            udpWorkerThread = new Thread(() -> {
                 while (true) {
                     try {
                         byte[] udpBuffer = new byte[1024];
                         DatagramPacket udpPacket = new DatagramPacket(udpBuffer, udpBuffer.length);
                         udpSocket.receive(udpPacket);
 
-                        // Create a new worker thread for each UDP connection
-                        Thread udpWorkerThread = new Thread(new Worker(udpPacket.getData()));
-                        udpWorkerThread.start();
+                        // Pass UDP data directly to Worker class
+                        new Worker(udpPacket.getData()).run();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
-            }).start();
+            });
+            udpWorkerThread.start();
 
             while (true) {
                 byte[] buffer = new byte[1024];
@@ -84,6 +85,11 @@ public class Mediator implements Runnable {
                         // Now clientsWithBlocks contains the IP addresses and their associated blocks
                         System.out.println("Blocks Information Updated: " + clientsWithBlocks);
 
+
+
+                        // Iterate clients with blocks to get all the IP's that have and  send a request 3 to those addresses
+
+                        
                         // Test change later to get the IP address of the best nodes to download each block
                         // Iterate to send the best for each block
                         //__________________________________________________________________________________
@@ -94,14 +100,26 @@ public class Mediator implements Runnable {
                         String blockName = "diogo.txt«0001";
                         //__________________________________________________________________________________
 
-                        // Send the IP address and block name to the other node
-                        String toReceive = "2" + IP + blockName;
+                        // choose best IP
+                        String toReceive = "3" + IP + SenderIP;
                         byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-                        // Send message to other node to start up the sending process
                         DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
                         udpSocket.send(packet);
+
+                        Thread.sleep(200);
+                        // Access the tripTime value immediately after sending the first datagram
+                        long tripTime = 100000;
+                        tripTime = Worker.getTripTime();
+                        System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
+
+                        // Send the IP address and block name to the other node
+                        toReceive = "2" + IP + blockName;
+                        receive = toReceive.getBytes(StandardCharsets.UTF_8);
+                        // Send message to other node to start up the sending process
+                        packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
+                        udpSocket.send(packet);
                         //__________________________________________________________________________________
-                        
+
                     } else {
                         System.out.println("Invalid header format.");
                     }

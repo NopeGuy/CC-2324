@@ -6,15 +6,15 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-
 public class UDPMethods {
-    
+
     public static void FileSender(String filePath, String ip) {
         try {
             DatagramSocket socket = new DatagramSocket();
@@ -25,7 +25,7 @@ public class UDPMethods {
 
             // Hash the file content
             byte[] hashCode = FileMethods.generateMD5(fileData, fileData.length);
-            
+
             // Extract the filename from the full path
             String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
             System.out.println("Filename inside FileSender: " + fileName);
@@ -123,5 +123,54 @@ public class UDPMethods {
 
         String filePath = "./ClientFiles/" + fileName;
         FileSender(filePath, ip);
+    }
+
+    public static void RTTRequest(byte[] data) throws SocketException {
+        try (DatagramSocket udpSocket = new DatagramSocket()) {
+            try {
+                // Assuming the data contains the IP address of the receiver
+                String ReturnIP = new String(data, 1, 15, StandardCharsets.UTF_8);
+                String MyIP = new String(data, 16, 15, StandardCharsets.UTF_8);
+
+                // Create an RTTRequest packet with the sender's IP and current time
+                String requestType = "4";
+                long currentTime = System.currentTimeMillis();
+                byte[] currentTimeBytes = GenericMethods.longToBytes(currentTime);
+                String packetData = requestType + MyIP;
+
+                byte[] requestData = new byte[24];
+                System.arraycopy(packetData.getBytes(StandardCharsets.UTF_8), 0, requestData, 0, packetData.length());
+                System.arraycopy(currentTimeBytes, 0, requestData, 16, 8);
+
+                DatagramPacket requestPacket = new DatagramPacket(requestData, requestData.length,
+                        InetAddress.getByName(ReturnIP), 9090);
+
+                // Send the RTTRequest packet
+                udpSocket.send(requestPacket);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static long RTTResponse(byte[] data) {
+        long tripTime = -1;
+        try {
+            // Assuming the data contains the IP address of the sender and a timestamp
+            String ipAddress = new String(data, 1, 15, StandardCharsets.UTF_8);
+            byte[] timestampBytes = new byte[8];
+            System.arraycopy(data, 16, timestampBytes, 0, 8);
+            long timestamp = GenericMethods.bytesToLong(timestampBytes);
+
+            // Calculate the round-trip time
+            tripTime = System.currentTimeMillis() - timestamp;
+
+            // Print the round-trip time
+            System.out.println("RTT for IP " + ipAddress + ": " + tripTime + " milliseconds");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tripTime;
     }
 }
