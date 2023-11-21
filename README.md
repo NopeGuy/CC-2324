@@ -7,7 +7,7 @@ This project implements a distributed file sharing system using Java socket prog
 
 - File Fragmentation: Files are split into blocks to facilitate efficient sharing.
 - UDP Communication: UDP is used for efficient block information exchange among clients.
-- Mediator Thread: A mediator thread coordinates the exchange of block information between clients.
+- Mediator Thread: A mediator thread coordinates the exchange of block information between clients and prioritizes those with better connection.
 - Menu System: Clients can interact with the system through a simple console menu.
 
 ## Components
