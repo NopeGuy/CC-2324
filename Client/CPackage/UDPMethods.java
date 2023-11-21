@@ -142,8 +142,7 @@ public class UDPMethods {
                 System.arraycopy(packetData.getBytes(StandardCharsets.UTF_8), 0, requestData, 0, packetData.length());
                 System.arraycopy(currentTimeBytes, 0, requestData, 16, 8);
 
-                DatagramPacket requestPacket = new DatagramPacket(requestData, requestData.length,
-                        InetAddress.getByName(ReturnIP), 9090);
+                DatagramPacket requestPacket = new DatagramPacket(requestData, requestData.length, InetAddress.getByName(ReturnIP), 9090);
 
                 // Send the RTTRequest packet
                 udpSocket.send(requestPacket);
