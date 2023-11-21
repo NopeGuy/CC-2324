@@ -72,7 +72,7 @@ public class Mediator implements Runnable {
                         Map<String, List<String>> clientsWithBlocks = new HashMap<>();
 
                         for (String block : blocks) {
-                            String[] blockInfo = block.split("/");
+                            String[] blockInfo = block.split("//");
                             if (blockInfo.length == 2) {
                                 String blockNumber = blockInfo[0];
                                 String ipAddress = blockInfo[1]; // Extracting IP address
@@ -101,22 +101,28 @@ public class Mediator implements Runnable {
                         //__________________________________________________________________________________
 
                         // choose best IP
-                        String toReceive = "3" + IP + SenderIP;
-                        byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-                        DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
-                        udpSocket.send(packet);
+                                                
+                        for (Map.Entry<String, List<String>> entry : clientsWithBlocks.entrySet()) {
+                            String key = entry.getKey();
+                            List<String> value = entry.getValue();
+                            System.out.println("Key: " + key + " Value: " + value);
 
-                        Thread.sleep(200);
-                        // Access the tripTime value immediately after sending the first datagram
-                        long tripTime = 100000;
-                        tripTime = Worker.getTripTime();
-                        System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
+                            String toReceive = "3" + IP + key;
+                            byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
+                            DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
+                            udpSocket.send(packet);
 
+                            Thread.sleep(200);
+                            // Access the tripTime value immediately after sending the first datagram
+                            long tripTime = 100000;
+                            tripTime = Worker.getTripTime();
+                            System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
+                        }
                         // Send the IP address and block name to the other node
-                        toReceive = "2" + IP + blockName;
-                        receive = toReceive.getBytes(StandardCharsets.UTF_8);
+                        String toReceive = "2" + IP + blockName;
+                        byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
                         // Send message to other node to start up the sending process
-                        packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
+                        DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
                         udpSocket.send(packet);
                         //__________________________________________________________________________________
 
