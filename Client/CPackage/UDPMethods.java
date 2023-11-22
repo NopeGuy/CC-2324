@@ -28,11 +28,9 @@ public class UDPMethods {
 
             // Extract the filename from the full path
             String fileName = filePath.substring(filePath.lastIndexOf(File.separator) + 1);
-            System.out.println("Filename inside FileSender: " + fileName);
 
             // Ensure the filename length is exactly 30 characters
             fileName = GenericMethods.padString(fileName, 30);
-            System.out.println("Filename inside after padding FileSender: " + fileName);
 
             // Create header with requestType;IP;HashCode;Filename
             byte[] ipBytes = Arrays.copyOf(ip.getBytes(StandardCharsets.UTF_8), 15);
@@ -40,7 +38,6 @@ public class UDPMethods {
 
             // Calculate the total length of the header
             int headerLength = 1 + ipBytes.length + hashCode.length + fileNameBytes.length;
-            System.out.println("Header length: " + headerLength);
 
             // Combine header and file data
             byte[] dataToSendBytes = new byte[headerLength + fileData.length];
@@ -94,11 +91,7 @@ public class UDPMethods {
     }
 
     public static void parseFileReceiveRequest(byte[] data) {
-        String ip = new String(data, 1, 15, StandardCharsets.UTF_8).trim();
-        System.out.println("IP: " + ip);
-
         String fileName = new String(data, 16, 30, StandardCharsets.UTF_8).trim();
-        System.out.println("FileName: " + fileName);
 
         byte[] hash = new byte[16];
         System.arraycopy(data, 46, hash, 0, 16);
@@ -107,19 +100,14 @@ public class UDPMethods {
         byte[] payload = new byte[payloadLength];
         System.arraycopy(data, 62, payload, 0, payloadLength);
 
-        String teste = new String(payload, 0, 20, StandardCharsets.UTF_8).trim();
-        System.out.println("Teste: " + teste);
-
         String filePath = "./ClientFiles/" + fileName;
         FileReceiver(filePath, hash, payload);
     }
 
     public static void parseFileSendRequest(byte[] data) {
         String ip = new String(data, 1, 15, StandardCharsets.UTF_8).trim();
-        System.out.println("IP: " + ip);
 
         String fileName = new String(data, 16, data.length - 16, StandardCharsets.UTF_8).trim();
-        System.out.println("File Name in worker request 2: " + fileName);
 
         String filePath = "./ClientFiles/" + fileName;
         FileSender(filePath, ip);
@@ -129,8 +117,8 @@ public class UDPMethods {
         try (DatagramSocket udpSocket = new DatagramSocket()) {
             try {
                 // Assuming the data contains the IP address of the receiver
-                String ReturnIP = new String(data, 1, 15, StandardCharsets.UTF_8);
-                String MyIP = new String(data, 16, 15, StandardCharsets.UTF_8);
+                String ReturnIP = new String(data, 1, 14, StandardCharsets.UTF_8);
+                String MyIP = new String(data, 16, 14, StandardCharsets.UTF_8);
 
                 // Create an RTTRequest packet with the sender's IP and current time
                 String requestType = "4";
@@ -156,7 +144,7 @@ public class UDPMethods {
         long tripTime = -1;
         try {
             // Assuming the data contains the IP address of the sender and a timestamp
-            String ipAddress = new String(data, 1, 15, StandardCharsets.UTF_8);
+            //String ipAddress = new String(data, 1, 15, StandardCharsets.UTF_8);
             byte[] timestampBytes = new byte[8];
             System.arraycopy(data, 16, timestampBytes, 0, 8);
             long timestamp = GenericMethods.bytesToLong(timestampBytes);
@@ -164,8 +152,6 @@ public class UDPMethods {
             // Calculate the round-trip time
             tripTime = System.currentTimeMillis() - timestamp;
 
-            // Print the round-trip time
-            System.out.println("RTT for IP " + ipAddress + ": " + tripTime + " milliseconds");
 
         } catch (Exception e) {
             e.printStackTrace();

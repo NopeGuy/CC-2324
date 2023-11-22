@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import CPackage.GenericMethods;
 
 public class Mediator implements Runnable {
     private InputStream clientInput;
@@ -54,9 +57,6 @@ public class Mediator implements Runnable {
                 if (bytesRead != -1) {
                     String firstByte = new String(buffer, 0, 1, StandardCharsets.UTF_8);
 
-                    // Debug
-                    System.out.println("First Byte: " + firstByte);
-
                     if (firstByte.equals("1")) {
                         // Handle request type "1" - Message from Server
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
@@ -65,10 +65,12 @@ public class Mediator implements Runnable {
                     } else if (firstByte.equals("2")) {
                         // Handle request type "2" - Update blocks information
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
-                        System.out.println("Received data: " + receivedData);
 
                         // Parse blocks to update the list of people with blocks
-                        String[] blocks = receivedData.split("\\|");
+                        String[] data = receivedData.split("%");
+                        String fileName = data[1];
+                        String myIP = data[2];
+                        String[] blocks = data[0].split("\\|");
                         Map<String, List<String>> clientsWithBlocks = new HashMap<>();
 
                         for (String block : blocks) {
@@ -77,63 +79,65 @@ public class Mediator implements Runnable {
                                 String blockNumber = blockInfo[0];
                                 String ipAddress = blockInfo[1]; // Extracting IP address
 
-                                // Store blocks associated with IP addresses
-                                clientsWithBlocks.computeIfAbsent(ipAddress, k -> new ArrayList<>()).add(blockNumber);
+                                // Store IP addresses associated with block numbers
+                                clientsWithBlocks.computeIfAbsent(blockNumber, k -> new ArrayList<>()).add(ipAddress);
                             }
                         }
 
-                        // Now clientsWithBlocks contains the IP addresses and their associated blocks
                         System.out.println("Blocks Information Updated: " + clientsWithBlocks);
 
-
-
-                        // Iterate clients with blocks to get all the IP's that have and  send a request 3 to those addresses
-
-                        
-                        // Test change later to get the IP address of the best nodes to download each block
-                        // Iterate to send the best for each block
-                        //__________________________________________________________________________________
-                        String IP = "010.000.000.002";
                         String blockName = "diogo.txt«0001";
-                        //__________________________________________________________________________________
 
                         // choose best IP
-                                                
+
                         long minTripTime = 100000;
-                        String SenderIP = "010.000.000.001";
+                        String senderIP = "010.000.000.001";
                         java.net.InetAddress Inetip;
+                        String toReceive="";
+                        // remove the first char in myIP
+                        myIP = myIP.substring(1);
 
-                        for (Map.Entry<String, List<String>> entry : clientsWithBlocks.entrySet()) {
-                            String key = entry.getKey();
-                            List<String> value = entry.getValue();
-                            System.out.println("Key: " + key + " Value: " + value);
+                        // Iterate through the map to send a request to each block number
+                        for (Map.Entry<String, List<String>> blockEntry : clientsWithBlocks.entrySet()) {
+                            String blockNumber = blockEntry.getKey();
+                            List<String> ipAddresses = blockEntry.getValue();
 
-                            String toReceive = "3" + IP + key;
-                            Inetip = java.net.InetAddress.getByName(key);
+                            // Send request to each IP that has the block
+                            for (String ipAddress : ipAddresses) {
+                                System.out.println("Sending request to IP: " + ipAddress);
+                                myIP = GenericMethods.transformToFullIP(myIP);
+                                ipAddress = GenericMethods.transformToFullIP(ipAddress);
+                                toReceive = "3" + myIP + ipAddress;
+                                // remove all /n from toReceive
+                                toReceive = toReceive.replaceAll("\n", "");
+                                InetAddress inetAddress = InetAddress.getByName(ipAddress);
+                                byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
+                                DatagramPacket packet = new DatagramPacket(receive, receive.length, inetAddress, 9090);
+                                udpSocket.send(packet);
+
+                                Thread.sleep(200);
+
+                                // Access the tripTime value immediately after sending the datagram
+                                long tripTime = Worker.getTripTime();
+                                System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
+
+                                // Update the minimum trip time and corresponding IP
+                                if (tripTime < minTripTime) {
+                                    minTripTime = tripTime;
+                                    senderIP = ipAddress;
+                                }
+                            }
+
+                            // Send the IP address and block name to the other node
+                            blockName = fileName + "«" + blockNumber;
+                            toReceive = "2" + myIP + blockName;
                             byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
+
+                            Inetip = java.net.InetAddress.getByName(senderIP);
                             DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
                             udpSocket.send(packet);
-
-                            Thread.sleep(100);
-
-                            // Access the tripTime value immediately after sending the datagram
-                            long tripTime = Worker.getTripTime();
-                            System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
-
-                            // Update the minimum trip time and corresponding IP
-                            if (tripTime < minTripTime) {
-                                minTripTime = tripTime;
-                                SenderIP = key;
-                            }
                         }
-                        // Send the IP address and block name to the other node
-                        String toReceive = "2" + IP + blockName;
-                        byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-                        // Send message to other node to start up the sending process
-                        Inetip = java.net.InetAddress.getByName(SenderIP);
-                        DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
-                        udpSocket.send(packet);
-                        //__________________________________________________________________________________
+                        // __________________________________________________________________________________
 
                     } else {
                         System.out.println("Invalid header format.");

@@ -36,6 +36,7 @@ public class ClientHandler implements Runnable {
                 String requestType = parts[0];
                 String ip = parts[1];
                 String requestInfo = parts[2];
+                ip = transformToFullIP(ip);
 
                 if (requestType.equals("1")) {
                     String[] fileswithsize = requestInfo.split(":");
@@ -83,7 +84,10 @@ public class ClientHandler implements Runnable {
                         for (String block : blocks) {
                             clientsWithBlocks.append(block).append("|");
                         }
-                        clientsWithBlocks.append("|");
+                        clientsWithBlocks.append("%");
+                        clientsWithBlocks.append(requestedFile);
+                        clientsWithBlocks.append("%");
+                        clientsWithBlocks.append(ip);
                         clientsWithBlocks.deleteCharAt(clientsWithBlocks.length() - 2); // Remove the last ", "
                         clientsWithBlocks.append("\n");
                     } else {
@@ -121,5 +125,32 @@ public class ClientHandler implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String transformToFullIP(String ip) {
+        // Split the IP address into its segments
+        String[] segments = ip.split("\\.");
+
+        // Create a StringBuilder to build the transformed IP
+        StringBuilder fullIP = new StringBuilder();
+
+        for (int i = 0; i < segments.length; i++) {
+            String segment = segments[i];
+
+            // Pad each segment with leading zeros to make it three digits
+            while (segment.length() < 3) {
+                segment = "0" + segment;
+            }
+
+            // Append the formatted segment to the full IP
+            fullIP.append(segment);
+
+            // Add a dot to separate segments, but not after the last one
+            if (i < segments.length - 1) {
+                fullIP.append(".");
+            }
+        }
+
+        return fullIP.toString();
     }
 }
