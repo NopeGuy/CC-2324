@@ -7,12 +7,14 @@ public class ClientHandler implements Runnable {
     private Socket clientSocket;
     private Map<String, List<String>> clientFilesMap;
     private Map<String, List<String>> clientBlockFilesMap;
+    private Map<String, Integer> FileBlockNumber;
 
     public ClientHandler(Socket clientSocket, Map<String, List<String>> clientFilesMap,
-            Map<String, List<String>> clientBlockFilesMap) {
+            Map<String, List<String>> clientBlockFilesMap, Map<String, Integer> FileBlockNumber) {
         this.clientSocket = clientSocket;
         this.clientFilesMap = clientFilesMap;
         this.clientBlockFilesMap = clientBlockFilesMap;
+        this.FileBlockNumber = FileBlockNumber;
     }
 
     @Override
@@ -23,6 +25,7 @@ public class ClientHandler implements Runnable {
 
             byte[] buffer = new byte[1024];
             int bytesRead;
+            String ip = "";
 
             while ((bytesRead = inputStream.read(buffer)) != -1) {
                 String receivedString = new String(buffer, 0, bytesRead, StandardCharsets.UTF_8);
@@ -34,22 +37,27 @@ public class ClientHandler implements Runnable {
                 }
 
                 String requestType = parts[0];
-                String ip = parts[1];
+                ip = parts[1];
                 String requestInfo = parts[2];
                 ip = transformToFullIP(ip);
 
                 if (requestType.equals("1")) {
                     String[] fileswithsize = requestInfo.split(":");
                     for (String file : fileswithsize) {
-                        String[] filesName = file.split("!");
-                        
-                        // Update clientFilesMap to associate IP with files
-                        if (!clientFilesMap.containsKey(filesName[0])) {
-                            clientFilesMap.put(filesName[0], new ArrayList<>());
+                        String[] filesInfo = file.split("!");
+
+                        if (!clientFilesMap.containsKey(filesInfo[0])) {
+                            clientFilesMap.put(filesInfo[0], new ArrayList<>());
                         }
-                        List<String> files = clientFilesMap.get(filesName[0]);
+                        List<String> files = clientFilesMap.get(filesInfo[0]);
                         files.add(ip);
-                        clientFilesMap.put(filesName[0], files);
+                        clientFilesMap.put(filesInfo[0], files);
+
+                        // Set the number of blocks for the file
+                        if (filesInfo.length > 1) {
+                            int numberOfBlocks = Integer.parseInt(filesInfo[1]);
+                            FileBlockNumber.put(filesInfo[0], numberOfBlocks);
+                        }
                     }
                     System.out.println("Received files for IP " + ip + ": " + clientFilesMap);
                 }
@@ -72,6 +80,7 @@ public class ClientHandler implements Runnable {
                     }
 
                     System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
+                    System.out.println("FileBlockNumber: " + FileBlockNumber);
                 }
 
                 if (requestType.equals("3")) {
@@ -88,13 +97,18 @@ public class ClientHandler implements Runnable {
                         clientsWithBlocks.append(requestedFile);
                         clientsWithBlocks.append("%");
                         clientsWithBlocks.append(ip);
-                        clientsWithBlocks.deleteCharAt(clientsWithBlocks.length() - 2); // Remove the last ", "
+                        clientsWithBlocks.append("%");
+                        // Append the number of blocks for the requested file
+                        if (FileBlockNumber.containsKey(requestedFile)) {
+                            clientsWithBlocks.append(FileBlockNumber.get(requestedFile));
+                        }
                         clientsWithBlocks.append("\n");
+                        System.out.println("Clients with blocks: " + clientsWithBlocks);
                     } else {
                         clientsWithBlocks.append("1;" + "No clients have blocks of file ").append(requestedFile).append("\n");
                     }
 
-                    //debug
+                    // debug
                     System.out.println("Clients with blocks: " + clientsWithBlocks);
                     byte[] responseBytes = clientsWithBlocks.toString().getBytes(StandardCharsets.UTF_8);
                     outputStream.write(responseBytes);
@@ -121,6 +135,14 @@ public class ClientHandler implements Runnable {
                     }
                 }
             }
+            // Delete all the info of clientBlockFilesMap from that IP
+            final String finalIp = ip;
+            clientBlockFilesMap.values().forEach(blocksList -> blocksList.removeIf(block -> block.endsWith("/" + finalIp)));
+            clientBlockFilesMap.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+            System.out.println("Updated clientBlockFilesMap: " + clientBlockFilesMap);
+
+            clientSocket.close();
+            
             clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();

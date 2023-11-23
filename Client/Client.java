@@ -25,7 +25,7 @@ public class Client {
             System.out.println("Connected to server.");
 
             // Get the client IP
-            String clientIp = socket.getLocalAddress().toString();
+            String clientIp = socket.getLocalAddress().getHostAddress();
             clientIp = GenericMethods.transformToFullIP(clientIp);
             System.out.println("Client IP: " + clientIp);
 

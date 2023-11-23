@@ -55,7 +55,8 @@ public class FileMethods {
         return -1;
     }
 
-    public static void fragmentAndSendInfo(File clientFilesFolder, String clientIp, OutputStream outputStream) throws IOException {
+    public static void fragmentAndSendInfo(File clientFilesFolder, String clientIp, OutputStream outputStream)
+            throws IOException {
         StringBuilder messageBuilder = new StringBuilder();
         StringBuilder messageBuilderBlocks = new StringBuilder();
         messageBuilder.append("1").append(";").append(clientIp).append(";");
@@ -80,7 +81,8 @@ public class FileMethods {
                     }
 
                     int blocksNumber = FileMethods.fileSplitter(fileName, path, numBlocks);
-                    System.out.println("The file " + fileName + " has been fragmented into " + blocksNumber + " blocks");
+                    System.out
+                            .println("The file " + fileName + " has been fragmented into " + blocksNumber + " blocks");
 
                     // Append to the appropriate message builder
                     messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
@@ -119,6 +121,49 @@ public class FileMethods {
             System.out.println("No files found in the 'ClientFiles' folder.");
         }
     }
+
+    public static void recreateFile(String fileName, int numBlocks) {
+        String outputDir = "./ClientFiles/";
+
+        // Check if files with names from "filename«0001" up to "filename«blocknumber"
+        // are present
+        boolean allBlocksPresent = true;
+        for (int i = 1; i <= numBlocks; i++) {
+            String blockFileName = String.format("%s«%04d", fileName, i);
+            File blockFile = new File(outputDir + blockFileName);
+            if (!blockFile.exists()) {
+                allBlocksPresent = false;
+                break;
+            }
+        }
+
+        if (allBlocksPresent) {
+            try (FileOutputStream fos = new FileOutputStream(outputDir + fileName)) {
+                for (int i = 1; i <= numBlocks; i++) {
+                    String blockFileName = String.format("%s«%04d", fileName, i);
+                    try (FileInputStream fis = new FileInputStream(outputDir + blockFileName)) {
+                        byte[] buffer = new byte[962];
+                        int bytesRead;
+                        while ((bytesRead = fis.read(buffer)) != -1) {
+                            fos.write(buffer, 0, bytesRead);
+                        }
+                    }
+                }
+                System.out.println("File " + fileName + " recreated successfully.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Error: Not all blocks of the file are present in the folder.");
+        }
+    }
+
+    // // Delete all blocks of the file
+    // for (File blockFile : files) {
+    // if (!blockFile.delete()) {
+    // System.err.println("Failed to delete block file: " + blockFile.getName());
+    // }
+    // }
 
     public static int findNullByteIndex(byte[] array) {
         int index = 0;
