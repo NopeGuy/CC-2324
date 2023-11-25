@@ -21,14 +21,11 @@ public class FileMethods {
         File inputFile = new File(filePath);
 
         try (FileInputStream fis = new FileInputStream(inputFile)) {
-            // change later
-            byte[] buffer = new byte[50000];
+            byte[] buffer = new byte[blockSize];
             int bytesRead;
             int blockNumber = 1;
 
-            long fileSize = inputFile.length();
-
-            for (int i = 0; i < numBlocks - 1; i++) {
+            for (int i = 0; i < numBlocks; i++) {
                 bytesRead = fis.read(buffer, 0, blockSize);
 
                 String blockFileName = String.format("%s«%04d", fileName, blockNumber);
@@ -37,14 +34,6 @@ public class FileMethods {
                 }
 
                 blockNumber++;
-            }
-
-            int remainingBytes = (int) (fileSize % blockSize);
-            bytesRead = fis.read(buffer, 0, remainingBytes);
-
-            String lastBlockFileName = String.format("%s«%04d", fileName, blockNumber);
-            try (FileOutputStream fos = new FileOutputStream(outputDir + lastBlockFileName)) {
-                fos.write(buffer, 0, bytesRead);
             }
 
             System.out.println("File split into " + numBlocks + " blocks.");
@@ -56,71 +45,70 @@ public class FileMethods {
         return -1;
     }
 
-    public static void fragmentAndSendInfo(String clientIp, OutputStream outputStream)
-            throws IOException {
+    public static void fragmentAndSendInfo(String clientIp, OutputStream outputStream) throws IOException {
         StringBuilder messageBuilder = new StringBuilder();
         StringBuilder messageBuilderBlocks = new StringBuilder();
-        messageBuilder.append("1").append(";").append(clientIp).append(";");
-        messageBuilderBlocks.append("2").append(";").append(clientIp).append(";");
         String message;
+
         File clientFilesFolder = new File("ClientFiles");
         File[] files = clientFilesFolder.listFiles();
 
-        if (files != null && files.length > 0) {
-            // First loop: Fragmentation without considering blocks
-            for (File file : files) {
-                if (file.isFile() && !file.getName().contains("«")) {
-                    String fileName = file.getName();
-                    String path = "./ClientFiles/" + fileName;
-                    Path pathFile = Paths.get("./ClientFiles/" + fileName);
-                    long fileSize = Files.size(pathFile);
+        // First loop: Fragmentation without considering blocks
+        for (File file : files) {
+            if (file.isFile() && !file.getName().contains("«")) {
+                String fileName = file.getName();
+                String path = "./ClientFiles/" + fileName;
+                Path pathFile = Paths.get("./ClientFiles/" + fileName);
+                long fileSize = Files.size(pathFile);
 
-                    int numBlocks;
-                    if (fileSize % 962 == 0) {
-                        numBlocks = (int) (fileSize / 962);
-                    } else {
-                        numBlocks = ((int) (fileSize / 962)) + 1;
-                    }
-
-                    int blocksNumber = FileMethods.fileSplitter(fileName, path, numBlocks);
-                    System.out
-                            .println("The file " + fileName + " has been fragmented into " + blocksNumber + " blocks");
-
-                    // Append to the appropriate message builder
-                    messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
+                int numBlocks;
+                if (fileSize % 962 == 0) {
+                    numBlocks = (int) (fileSize / 962);
+                } else {
+                    numBlocks = ((int) (fileSize / 962)) + 1;
                 }
-            }
 
-            // Send message for fragmentation
-            if (messageBuilder.length() > 2) {
-                messageBuilder.deleteCharAt(messageBuilder.length() - 1);
-                message = messageBuilder.toString();
-                System.out.println(message); // debug
-                byte[] ack = message.getBytes(StandardCharsets.UTF_8);
-                outputStream.write(ack);
-                outputStream.flush();
-            }
+                int blocksNumber = fileSplitter(fileName, path, numBlocks);
+                System.out.println("The file " + fileName + " has been fragmented into " + blocksNumber + " blocks");
 
-            clientFilesFolder = new File("Blocks");
-            files = clientFilesFolder.listFiles();
-            // Second loop: Search for blocks
-            for (File file : files) {
-                if (file.isFile() && file.getName().contains("«")) {
-                    // Handle files with '«' in their name for block information
-                    messageBuilderBlocks.append(file.getName()).append("|");
-                }
+                // Append to the appropriate message builder
+                messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
             }
+        }
 
-            // Send message for block information
-            if (messageBuilderBlocks.length() > 2) {
-                messageBuilderBlocks.deleteCharAt(messageBuilderBlocks.length() - 1);
-                message = messageBuilderBlocks.toString();
-                System.out.println(message); // debug
-                byte[] ack2 = message.getBytes(StandardCharsets.UTF_8);
-                outputStream.write(ack2);
-                outputStream.flush();
+        // Send message for fragmentation
+        if (messageBuilder.length() > 0) {
+            messageBuilder.deleteCharAt(messageBuilder.length() - 1);
+            message = "1;" + clientIp + ";" + messageBuilder.toString();
+            System.out.println(message); // debug
+            byte[] ack = message.getBytes(StandardCharsets.UTF_8);
+            outputStream.write(ack);
+            outputStream.flush();
+        }
+
+        // Second loop: Search for blocks
+        File clientBlocksFolder = new File("Blocks");
+        File[] blockFiles = clientBlocksFolder.listFiles();
+
+        for (File blockFile : blockFiles) {
+            if (blockFile.isFile() && blockFile.getName().contains("«")) {
+                // Handle files with '«' in their name for block information
+                messageBuilderBlocks.append(blockFile.getName()).append("|");
             }
-        } else {
+        }
+
+        // Send message for block information
+        if (messageBuilderBlocks.length() > 0) {
+            messageBuilderBlocks.deleteCharAt(messageBuilderBlocks.length() - 1);
+            message = "2;" + clientIp + ";" + messageBuilderBlocks.toString();
+            System.out.println(message); // debug
+            byte[] ack2 = message.getBytes(StandardCharsets.UTF_8);
+            outputStream.write(ack2);
+            outputStream.flush();
+        }
+
+        // Notify if no files found in the 'ClientFiles' folder
+        if (files.length == 0) {
             System.out.println("No files found in the 'ClientFiles' folder.");
         }
     }
