@@ -23,7 +23,8 @@ public class ClientHandler implements Runnable {
             InputStream inputStream = clientSocket.getInputStream();
             OutputStream outputStream = clientSocket.getOutputStream();
 
-            byte[] buffer = new byte[1024];
+            // change later
+            byte[] buffer = new byte[50000];
             int bytesRead;
             String ip = "";
 

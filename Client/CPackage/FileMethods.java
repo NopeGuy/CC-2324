@@ -21,7 +21,8 @@ public class FileMethods {
         File inputFile = new File(filePath);
 
         try (FileInputStream fis = new FileInputStream(inputFile)) {
-            byte[] buffer = new byte[blockSize];
+            // change later
+            byte[] buffer = new byte[50000];
             int bytesRead;
             int blockNumber = 1;
 

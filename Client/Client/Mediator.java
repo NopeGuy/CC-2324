@@ -68,6 +68,7 @@ public class Mediator implements Runnable {
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
 
                         // Parse blocks to update the list of people with blocks
+                        System.out.println("Received blocks information: " + receivedData);
                         String[] data = receivedData.split("%");
                         String fileName = data[1];
                         String myIP = data[2];

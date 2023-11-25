@@ -1,5 +1,7 @@
 package CPackage;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,26 +38,29 @@ public class UDPMethods {
             byte[] ipBytes = Arrays.copyOf(ip.getBytes(StandardCharsets.UTF_8), 15);
             byte[] fileNameBytes = Arrays.copyOf(fileName.getBytes(StandardCharsets.UTF_8), 30);
 
-            // Calculate the total length of the header
-            int headerLength = 1 + ipBytes.length + hashCode.length + fileNameBytes.length;
-
             // Combine header and file data
-            byte[] dataToSendBytes = new byte[headerLength + fileData.length];
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
-            // Add requestType
-            dataToSendBytes[0] = '1';
+            // Write requestType
+            dataOutputStream.writeByte('1');
 
-            // Add IP
-            System.arraycopy(ipBytes, 0, dataToSendBytes, 1, 15);
+            // Write IP
+            dataOutputStream.write(ipBytes);
 
-            // Add fileName
-            System.arraycopy(fileNameBytes, 0, dataToSendBytes, 16, 30);
+            // Write fileName
+            dataOutputStream.write(fileNameBytes);
 
-            // Add hashCode
-            System.arraycopy(hashCode, 0, dataToSendBytes, 46, 16);
+            // Write hashCode
+            dataOutputStream.write(hashCode);
 
-            // Add fileData
-            System.arraycopy(fileData, 0, dataToSendBytes, headerLength, fileData.length);
+            // Write fileData
+            dataOutputStream.write(fileData);
+
+            byte[] dataToSendBytes = byteArrayOutputStream.toByteArray();
+            //Size of the data to send
+            int dataToSendLength = dataToSendBytes.length;
+            System.out.println("Data to send length: " + dataToSendLength);
 
             // Send UDP packet with file data
             DatagramPacket packet = new DatagramPacket(dataToSendBytes, dataToSendBytes.length, receiverAddress, 9090);
@@ -68,24 +73,23 @@ public class UDPMethods {
             e.printStackTrace();
         }
     }
-
+    
     public static void FileReceiver(String filePath, byte[] hashCode, byte[] payload) {
+        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+            fos.write(payload);
+            System.out.println("File received and saved: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Check if the received hash code matches the expected hash code
         try {
-            // Find the actual length of the payload by searching for the first zero byte
-            int payloadLength = FileMethods.findNullByteIndex(payload);
-
-            try (FileOutputStream fos = new FileOutputStream(filePath)) {
-                fos.write(payload, 0, payloadLength);
-                System.out.println("File received and saved: " + filePath);
-            }
-
-            // Check if the received hash code matches the expected hash code
-            if (Arrays.equals(FileMethods.generateMD5(payload, payloadLength), hashCode)) {
+            if (Arrays.equals(FileMethods.generateMD5(payload, payload.length), hashCode)) {
                 System.out.println("Received file hash code is gucci.");
             } else {
                 System.out.println("Received file hash code doesn't match the expected hash code.");
             }
-        } catch (IOException | NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
