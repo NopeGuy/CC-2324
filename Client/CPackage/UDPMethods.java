@@ -14,8 +14,73 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import Client.Worker;
 
 public class UDPMethods {
+
+    public static void DownloadStart(String myIP, String fileName, Map<String, List<String>> clientsWithBlocks, DatagramSocket udpSocket) throws InterruptedException, IOException {
+        long minTripTime = 100000;
+        String senderIP = "010.000.000.001";
+        String toReceive;
+
+        // Iterate through the map to send a request to each block number
+        for (Map.Entry<String, List<String>> blockEntry : clientsWithBlocks.entrySet()) {
+            String blockNumber = blockEntry.getKey();
+            List<String> ipAddresses = blockEntry.getValue();
+            senderIP = ipAddresses.get(0);
+
+            // Check if the block already exists in the Blocks folder
+            String blockFileName = fileName + "«" + blockNumber;
+            if (blockExists(blockFileName)) {
+                System.out.println("Block " + blockFileName + " already exists. Skipping download.");
+                continue;
+            }
+
+            // Send request to each IP that has the block
+            for (String ipAddress : ipAddresses) {
+                System.out.println("Sending request to IP: " + ipAddress);
+                myIP = GenericMethods.transformToFullIP(myIP);
+                ipAddress = GenericMethods.transformToFullIP(ipAddress);
+                toReceive = "3" + myIP + ipAddress;
+                // remove all /n from toReceive
+                toReceive = toReceive.replaceAll("\n", "");
+                InetAddress inetAddress = InetAddress.getByName(ipAddress);
+                byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
+                DatagramPacket packet = new DatagramPacket(receive, receive.length, inetAddress, 9090);
+                udpSocket.send(packet);
+
+                Thread.sleep(50);
+
+                // Access the tripTime value immediately after sending the datagram
+                long tripTime = Worker.getTripTime();
+                System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
+
+                // Update the minimum trip time and corresponding IP
+                if (tripTime < minTripTime) {
+                    minTripTime = tripTime;
+                    senderIP = ipAddress;
+                }
+            }
+
+            // Send the IP address and block name to the other node
+            String blockName = fileName + "«" + blockNumber;
+            toReceive = "2" + myIP + blockName;
+            byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
+
+            InetAddress Inetip = InetAddress.getByName(senderIP);
+            DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
+            udpSocket.send(packet);
+        }
+    }
+
+    // Helper method to check if the block file already exists
+    private static boolean blockExists(String blockFileName) {
+        File file = new File("Blocks", blockFileName);
+        return file.exists();
+    }
 
     public static void FileSender(String filePath, String ip) {
         try {
@@ -58,7 +123,7 @@ public class UDPMethods {
             dataOutputStream.write(fileData);
 
             byte[] dataToSendBytes = byteArrayOutputStream.toByteArray();
-            //Size of the data to send
+            // Size of the data to send
             int dataToSendLength = dataToSendBytes.length;
             System.out.println("Data to send length: " + dataToSendLength);
 
@@ -73,8 +138,8 @@ public class UDPMethods {
             e.printStackTrace();
         }
     }
-    
-    public static void FileReceiver(String filePath, byte[] hashCode, byte[] payload) {
+
+    public static Boolean FileReceiver(String filePath, byte[] hashCode, byte[] payload) {
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
             fos.write(payload);
             System.out.println("File received and saved: " + filePath);
@@ -86,15 +151,18 @@ public class UDPMethods {
         try {
             if (Arrays.equals(FileMethods.generateMD5(payload, payload.length), hashCode)) {
                 System.out.println("Received file hash code is gucci.");
+                return true;
             } else {
                 System.out.println("Received file hash code doesn't match the expected hash code.");
+                return false;
             }
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+        return false;
     }
 
-    public static void parseFileReceiveRequest(byte[] data) {
+    public static Boolean parseFileReceiveRequest(byte[] data) {
         String fileName = new String(data, 16, 30, StandardCharsets.UTF_8).trim();
 
         byte[] hash = new byte[16];
@@ -105,7 +173,7 @@ public class UDPMethods {
         System.arraycopy(data, 62, payload, 0, payloadLength);
 
         String filePath = "./Blocks/" + fileName;
-        FileReceiver(filePath, hash, payload);
+        return FileReceiver(filePath, hash, payload);
     }
 
     public static void parseFileSendRequest(byte[] data) {
@@ -134,7 +202,8 @@ public class UDPMethods {
                 System.arraycopy(packetData.getBytes(StandardCharsets.UTF_8), 0, requestData, 0, packetData.length());
                 System.arraycopy(currentTimeBytes, 0, requestData, 16, 8);
 
-                DatagramPacket requestPacket = new DatagramPacket(requestData, requestData.length, InetAddress.getByName(ReturnIP), 9090);
+                DatagramPacket requestPacket = new DatagramPacket(requestData, requestData.length,
+                        InetAddress.getByName(ReturnIP), 9090);
 
                 // Send the RTTRequest packet
                 udpSocket.send(requestPacket);
@@ -148,14 +217,13 @@ public class UDPMethods {
         long tripTime = -1;
         try {
             // Assuming the data contains the IP address of the sender and a timestamp
-            //String ipAddress = new String(data, 1, 15, StandardCharsets.UTF_8);
+            // String ipAddress = new String(data, 1, 15, StandardCharsets.UTF_8);
             byte[] timestampBytes = new byte[8];
             System.arraycopy(data, 16, timestampBytes, 0, 8);
             long timestamp = GenericMethods.bytesToLong(timestampBytes);
 
             // Calculate the round-trip time
             tripTime = System.currentTimeMillis() - timestamp;
-
 
         } catch (Exception e) {
             e.printStackTrace();

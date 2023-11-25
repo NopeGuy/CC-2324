@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import CPackage.FileMethods;
-import CPackage.GenericMethods;
+import CPackage.UDPMethods;
 
 public class Mediator implements Runnable {
     private InputStream clientInput;
@@ -63,9 +62,12 @@ public class Mediator implements Runnable {
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
                         Thread.sleep(100);
                         System.out.println("Message from Server: " + receivedData);
+                        
                     } else if (firstByte.equals("2")) {
                         // Handle request type "2" - Update blocks information
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
+                        int tries = 0;
+                        boolean success = false;
 
                         // Parse blocks to update the list of people with blocks
                         System.out.println("Received blocks information: " + receivedData);
@@ -95,62 +97,27 @@ public class Mediator implements Runnable {
 
                         System.out.println("Blocks Information Updated: " + clientsWithBlocks);
 
-                        String blockName = "diogo.txt«0001";
-
-                        // choose best IP
-
-                        long minTripTime = 100000;
-                        String senderIP = "010.000.000.001";
-                        java.net.InetAddress Inetip;
-                        String toReceive="";
                         // remove the first char in myIP
+                        System.out.println("My IP before transforming: " + myIP);
                         myIP = myIP.substring(1);
+                        System.out.println("My IP after transforming: " + myIP);
 
-                        // Iterate through the map to send a request to each block number
-                        for (Map.Entry<String, List<String>> blockEntry : clientsWithBlocks.entrySet()) {
-                            String blockNumber = blockEntry.getKey();
-                            List<String> ipAddresses = blockEntry.getValue();
-                            senderIP = ipAddresses.get(0);
-
-                            // Send request to each IP that has the block
-                            for (String ipAddress : ipAddresses) {
-                                System.out.println("Sending request to IP: " + ipAddress);
-                                myIP = GenericMethods.transformToFullIP(myIP);
-                                ipAddress = GenericMethods.transformToFullIP(ipAddress);
-                                toReceive = "3" + myIP + ipAddress;
-                                // remove all /n from toReceive
-                                toReceive = toReceive.replaceAll("\n", "");
-                                InetAddress inetAddress = InetAddress.getByName(ipAddress);
-                                byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-                                DatagramPacket packet = new DatagramPacket(receive, receive.length, inetAddress, 9090);
-                                udpSocket.send(packet);
-
-                                Thread.sleep(50);
-
-                                // Access the tripTime value immediately after sending the datagram
-                                long tripTime = Worker.getTripTime();
-                                System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
-
-                                // Update the minimum trip time and corresponding IP
-                                if (tripTime < minTripTime) {
-                                    minTripTime = tripTime;
-                                    senderIP = ipAddress;
-                                }
+                        while(tries < 3 && success==false) {
+                            if(tries != 0){
+                                System.out.println("Download failed, retrying to download the file...\n");
                             }
-
-                            // Send the IP address and block name to the other node
-                            blockName = fileName + "«" + blockNumber;
-                            toReceive = "2" + myIP + blockName;
-                            byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
-
-                            Inetip = java.net.InetAddress.getByName(senderIP);
-                            DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
-                            udpSocket.send(packet);
+                            UDPMethods.DownloadStart(myIP, fileName, clientsWithBlocks, udpSocket);
+                            tries ++;
+                            success = Worker.getSuccess();
                         }
 
                         Thread.sleep(100);
                         // Count if there's all the blocks then recreate the file
-                        FileMethods.recreateFile(fileName, totalBlocks);
+                        if(success) {
+                            FileMethods.recreateFile(fileName, totalBlocks);
+                        } else {
+                            System.out.println("File wasn't downloaded due to an error in communication.");
+                        }
 
                     } else {
                         System.out.println("Invalid header format.");

@@ -9,6 +9,7 @@ public class Worker implements Runnable {
     private static long tripTime;
     byte[] hash;
     String ip, filePath;
+    static Boolean success = true;
 
     public Worker(byte[] buffer) {
         this.data = buffer;
@@ -21,7 +22,8 @@ public class Worker implements Runnable {
 
         switch (request) {
             case "1":
-                UDPMethods.parseFileReceiveRequest(data);
+                success = UDPMethods.parseFileReceiveRequest(data);
+                setSuccess(success);
                 break;
             case "2":
                 UDPMethods.parseFileSendRequest(data);
@@ -43,13 +45,23 @@ public class Worker implements Runnable {
         }
     }
 
-    // New method to set the tripTime field
+    // Method to set the tripTime field
     public void setTripTime(long tripTime) {
         Worker.tripTime = tripTime;
     }
 
-    // New method to get the tripTime value
+    // Method to get the tripTime value
     public static long getTripTime() {
         return tripTime;
+    }
+
+    // Method to set the success field
+    public void setSuccess(Boolean success) {
+        Worker.success = success;
+    }
+
+    // Method to get the success value
+    public static Boolean getSuccess() {
+        return success;
     }
 }
