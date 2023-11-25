@@ -52,7 +52,7 @@ public class Mediator implements Runnable {
             udpWorkerThread.start();
 
             while (true) {
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[20000];
                 int bytesRead = clientInput.read(buffer);
 
                 if (bytesRead != -1) {
@@ -148,7 +148,7 @@ public class Mediator implements Runnable {
                             udpSocket.send(packet);
                         }
 
-                        Thread.sleep(200);
+                        Thread.sleep(100);
                         // Count if there's all the blocks then recreate the file
                         FileMethods.recreateFile(fileName, totalBlocks);
 

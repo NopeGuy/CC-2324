@@ -7,8 +7,6 @@ import java.util.Scanner;
 
 import Client.Mediator;
 
-import java.io.File;
-
 import CPackage.*;
 
 public class Client {
@@ -30,8 +28,7 @@ public class Client {
             System.out.println("Client IP: " + clientIp);
 
 
-            File clientFilesFolder = new File("ClientFiles");
-            FileMethods.fragmentAndSendInfo(clientFilesFolder,clientIp, outputStream);
+            FileMethods.fragmentAndSendInfo(clientIp, outputStream);
 
             // Create a thread for the Mediator functionality
             Thread mediatorThread = new Thread(new Mediator(inputStream));

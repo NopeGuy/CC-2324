@@ -15,7 +15,7 @@ import java.security.NoSuchAlgorithmException;
 public class FileMethods {
 
     public static int fileSplitter(String fileName, String filePath, int numBlocks) {
-        String outputDir = "./ClientFiles/";
+        String outputDir = "./Blocks/";
         int blockSize = 962;
 
         File inputFile = new File(filePath);
@@ -56,13 +56,14 @@ public class FileMethods {
         return -1;
     }
 
-    public static void fragmentAndSendInfo(File clientFilesFolder, String clientIp, OutputStream outputStream)
+    public static void fragmentAndSendInfo(String clientIp, OutputStream outputStream)
             throws IOException {
         StringBuilder messageBuilder = new StringBuilder();
         StringBuilder messageBuilderBlocks = new StringBuilder();
         messageBuilder.append("1").append(";").append(clientIp).append(";");
         messageBuilderBlocks.append("2").append(";").append(clientIp).append(";");
         String message;
+        File clientFilesFolder = new File("ClientFiles");
         File[] files = clientFilesFolder.listFiles();
 
         if (files != null && files.length > 0) {
@@ -100,6 +101,7 @@ public class FileMethods {
                 outputStream.flush();
             }
 
+            clientFilesFolder = new File("Blocks");
             files = clientFilesFolder.listFiles();
             // Second loop: Search for blocks
             for (File file : files) {
@@ -124,6 +126,7 @@ public class FileMethods {
     }
 
     public static void recreateFile(String fileName, int numBlocks) {
+        String inputDir = "./Blocks/";
         String outputDir = "./ClientFiles/";
 
         // Check if files with names from "filename«0001" up to "filename«blocknumber"
@@ -131,7 +134,7 @@ public class FileMethods {
         boolean allBlocksPresent = true;
         for (int i = 1; i <= numBlocks; i++) {
             String blockFileName = String.format("%s«%04d", fileName, i);
-            File blockFile = new File(outputDir + blockFileName);
+            File blockFile = new File(inputDir + blockFileName);
             if (!blockFile.exists()) {
                 allBlocksPresent = false;
                 break;
@@ -142,7 +145,7 @@ public class FileMethods {
             try (FileOutputStream fos = new FileOutputStream(outputDir + fileName)) {
                 for (int i = 1; i <= numBlocks; i++) {
                     String blockFileName = String.format("%s«%04d", fileName, i);
-                    try (FileInputStream fis = new FileInputStream(outputDir + blockFileName)) {
+                    try (FileInputStream fis = new FileInputStream(inputDir + blockFileName)) {
                         byte[] buffer = new byte[962];
                         int bytesRead;
                         while ((bytesRead = fis.read(buffer)) != -1) {

@@ -104,7 +104,7 @@ public class UDPMethods {
         byte[] payload = new byte[payloadLength];
         System.arraycopy(data, 62, payload, 0, payloadLength);
 
-        String filePath = "./ClientFiles/" + fileName;
+        String filePath = "./Blocks/" + fileName;
         FileReceiver(filePath, hash, payload);
     }
 
@@ -113,7 +113,7 @@ public class UDPMethods {
 
         String fileName = new String(data, 16, data.length - 16, StandardCharsets.UTF_8).trim();
 
-        String filePath = "./ClientFiles/" + fileName;
+        String filePath = "./Blocks/" + fileName;
         FileSender(filePath, ip);
     }
 
@@ -121,8 +121,8 @@ public class UDPMethods {
         try (DatagramSocket udpSocket = new DatagramSocket()) {
             try {
                 // Assuming the data contains the IP address of the receiver
-                String ReturnIP = new String(data, 1, 14, StandardCharsets.UTF_8);
-                String MyIP = new String(data, 16, 14, StandardCharsets.UTF_8);
+                String ReturnIP = new String(data, 1, 15, StandardCharsets.UTF_8);
+                String MyIP = new String(data, 16, 15, StandardCharsets.UTF_8);
 
                 // Create an RTTRequest packet with the sender's IP and current time
                 String requestType = "4";
