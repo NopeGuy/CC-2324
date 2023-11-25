@@ -68,7 +68,7 @@ public class Client {
             }
             System.out.println("Closing connection.");
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error: Server is not reachable.");
         } finally {
             scanner.close();
         }
