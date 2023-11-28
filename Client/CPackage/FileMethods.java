@@ -113,7 +113,7 @@ public class FileMethods {
         }
     }
 
-    public static void recreateFile(String fileName, int numBlocks) {
+    public static Boolean recreateFile(String fileName, int numBlocks) {
         String inputDir = "./Blocks/";
         String outputDir = "./ClientFiles/";
 
@@ -147,7 +147,9 @@ public class FileMethods {
             }
         } else {
             System.out.println("Error: Not all blocks of the file are present in the folder.");
+            return false;
         }
+        return allBlocksPresent;
     }
 
     // // Delete all blocks of the file

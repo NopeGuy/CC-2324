@@ -21,10 +21,12 @@ import Client.Worker;
 
 public class UDPMethods {
 
-    public static void DownloadStart(String myIP, String fileName, Map<String, List<String>> clientsWithBlocks, DatagramSocket udpSocket) throws InterruptedException, IOException {
+    public static Boolean DownloadStart(String myIP, String fileName, Map<String, List<String>> clientsWithBlocks, DatagramSocket udpSocket) throws InterruptedException, IOException {
         long minTripTime = 100000;
         String senderIP = "010.000.000.001";
         String toReceive;
+        Boolean success = true;
+        Boolean tryAgain = false;
 
         // Iterate through the map to send a request to each block number
         for (Map.Entry<String, List<String>> blockEntry : clientsWithBlocks.entrySet()) {
@@ -73,7 +75,13 @@ public class UDPMethods {
             InetAddress Inetip = InetAddress.getByName(senderIP);
             DatagramPacket packet = new DatagramPacket(receive, receive.length, Inetip, 9090);
             udpSocket.send(packet);
+            
+            success = Worker.getSuccess();
+            if (success == false) {
+                tryAgain = true;
+            }
         }
+        return tryAgain;
     }
 
     // Helper method to check if the block file already exists

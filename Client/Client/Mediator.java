@@ -62,12 +62,12 @@ public class Mediator implements Runnable {
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
                         Thread.sleep(100);
                         System.out.println("Message from Server: " + receivedData);
-                        
+
                     } else if (firstByte.equals("2")) {
                         // Handle request type "2" - Update blocks information
                         String receivedData = new String(buffer, 2, bytesRead - 2, StandardCharsets.UTF_8);
                         int tries = 0;
-                        boolean success = false;
+                        boolean tryAgain = true;
 
                         // Parse blocks to update the list of people with blocks
                         System.out.println("Received blocks information: " + receivedData);
@@ -102,23 +102,26 @@ public class Mediator implements Runnable {
                         myIP = myIP.substring(1);
                         System.out.println("My IP after transforming: " + myIP);
 
-                        while(tries < 3 && success==false) {
-                            if(tries != 0){
+                        while (tries < 5 && tryAgain == true) {
+                            tryAgain = false;
+                            tries++;
+                            if (tries != 0) {
                                 System.out.println("Download failed, retrying to download the file...\n");
                             }
-                            UDPMethods.DownloadStart(myIP, fileName, clientsWithBlocks, udpSocket);
-                            tries ++;
-                            success = Worker.getSuccess();
+
+                            tryAgain = UDPMethods.DownloadStart(myIP, fileName, clientsWithBlocks, udpSocket);
+                            
+                            if (!tryAgain) {
+                                tryAgain = !FileMethods.recreateFile(fileName, totalBlocks);
+                            } 
+                            
+                            if(tryAgain && tries == 5){
+                                System.out.println("Download failed, maximum number of tries reached.\n");
+                            }
+
                         }
 
                         Thread.sleep(100);
-                        // Count if there's all the blocks then recreate the file
-                        if(success) {
-                            FileMethods.recreateFile(fileName, totalBlocks);
-                        } else {
-                            System.out.println("File wasn't downloaded due to an error in communication.");
-                        }
-
                     } else {
                         System.out.println("Invalid header format.");
                     }
