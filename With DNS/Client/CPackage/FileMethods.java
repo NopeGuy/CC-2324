@@ -37,7 +37,6 @@ public class FileMethods {
                 blockNumber++;
             }
 
-            System.out.println("File split into " + numBlocks + " blocks.");
             return numBlocks;
 
         } catch (IOException e) {
@@ -70,7 +69,6 @@ public class FileMethods {
                 }
 
                 int blocksNumber = fileSplitter(fileName, path, numBlocks);
-                System.out.println("The file " + fileName + " has been fragmented into " + blocksNumber + " blocks");
 
                 // Append to the appropriate message builder
                 messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
@@ -81,7 +79,6 @@ public class FileMethods {
         if (messageBuilder.length() > 0) {
             messageBuilder.deleteCharAt(messageBuilder.length() - 1);
             message = "1;" + messageBuilder.toString() + "$";
-            System.out.println(message); // debug
             byte[] ack = message.getBytes(StandardCharsets.UTF_8);
             outputStream.write(ack, 0, ack.length);
             outputStream.flush();
@@ -108,7 +105,6 @@ public class FileMethods {
                     if (messageBuilderBlocks.length() > 0) {
                         messageBuilderBlocks.deleteCharAt(messageBuilderBlocks.length() - 1);
                         message = "2;" + messageBuilderBlocks.toString() + "$";
-                        System.out.println(message); // debug
                         byte[] ack2 = message.getBytes(StandardCharsets.UTF_8);
                         outputStream.write(ack2, 0, ack2.length);
                         outputStream.flush();
@@ -125,7 +121,6 @@ public class FileMethods {
         if (messageBuilderBlocks.length() > 0) {
             messageBuilderBlocks.deleteCharAt(messageBuilderBlocks.length() - 1);
             message = "2;" + messageBuilderBlocks.toString() + "$";
-            System.out.println(message); // debug
             byte[] ack2 = message.getBytes(StandardCharsets.UTF_8);
             outputStream.write(ack2, 0, ack2.length);
             outputStream.flush();
@@ -170,7 +165,6 @@ public class FileMethods {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("Error: Not all blocks of the file are present in the folder.");
             return false;
         }
         return allBlocksPresent;

@@ -93,7 +93,6 @@ public class Mediator implements Runnable {
             Map<String, Long> averageSpeeds = new HashMap<>();
 
             // Parse blocks to update the list of people with blocks
-            System.out.println("Received blocks information: " + message);
             message = message.substring(2);
             String[] data = message.split("%");
             String fileName = data[1];
@@ -102,7 +101,7 @@ public class Mediator implements Runnable {
             String totalBlocksString = data[3];
             totalBlocksString = totalBlocksString.replaceAll("\n", "");
             if (totalBlocksString.equals("")) {
-                System.out.println("File can't be downloaded because there's not enough info on the server.");
+                System.out.println("File can't be downloaded because there's not enough info on the server. \n");
                 return;
             }
             int totalBlocks = Integer.parseInt(totalBlocksString);
@@ -120,7 +119,7 @@ public class Mediator implements Runnable {
                 }
             }
 
-            System.out.println("Blocks Information Updated: " + clientsWithBlocks);
+            System.out.println("Starting Download...");
 
             while (tries < 10 && tryAgain) {
                 tryAgain = false;
@@ -128,7 +127,6 @@ public class Mediator implements Runnable {
                 // Check all the download speeds and choose the fastest one
                 averageSpeeds = UDPMethods.calculateAverageTripTime(myIP, fileName, clientsWithBlocks, udpSocket);
                 Thread.sleep(3000);
-                System.out.println("Average speeds: " + averageSpeeds);
 
                 if (tries != 0) {
                     System.out.println("Download failed, retrying to download the file...\n");
@@ -141,7 +139,7 @@ public class Mediator implements Runnable {
                 }
 
                 if (tryAgain && tries == 10) {
-                    System.out.println("Download failed, the maximum number of tries reached.\n");
+                    System.out.println("Download failed, the maximum number of tries was reached.\n");
                 }
 
                 tries++;
