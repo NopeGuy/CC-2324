@@ -9,11 +9,12 @@ This project implements a distributed file sharing system using Java socket prog
 - UDP Communication: UDP is used for efficient block information exchange among clients.
 - Mediator Thread: A mediator thread coordinates the exchange of block information between clients and prioritizes those with better connection.
 - Menu System: Clients can interact with the system through a simple console menu.
+- DNS system: If you configure bind9 in your system you can connect the nodes through their domain names.
 
 ## Components
 ### Server
 
-The server listens for incoming connections from clients, manages client files and block information, and facilitates communication between clients.
+The server listens for incoming connections from clients, manages client files and block information, and facilitates communication between clients. 
 
 Usage:
 
@@ -31,6 +32,10 @@ Usage:
 ```
 java Client
 ```
+
+### DNS Files
+
+If you're using the DNS version of this project, you should install bind9 beforehand and dump the files inside "/etc/bind/" so there's a working name resolution.
 
 ## How to Use
 
@@ -55,7 +60,7 @@ Dependencies
 
 Notes
 
-    The project is currently configured to use the default server IP address (10.0.0.10) and port (9090). Update these values in the Client class if needed.
+    The project is currently configured to use the default server IP address (10.0.0.10) or Domain Name (Servidor1.cc23) and port (9090). Update these values in the Client class if needed.
 
 Contributors
 
