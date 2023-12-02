@@ -1,4 +1,7 @@
 # Distributed File Sharing System with UDP datagram transfer between nodes
+
+![alt text](https://blog.codinghorror.com/content/images/2019/09/bittorrent-animation.gif)
+
 ## Overview
 
 This project implements a distributed file sharing system using Java socket programming. It consists of a server and multiple clients that can share files with each other.
