@@ -1,7 +1,7 @@
 # Distributed File Sharing System with UDP datagram transfer between nodes
 
 <p align="center">
-  <img src="https://github.com/NopeGuy/CC-2324/blob/main/torrent-animation?raw=true" />
+  <img src="https://github.com/NopeGuy/CC-2324/blob/main/torrent-animation.gif?raw=true" />
 </p>
 
 ## Overview
