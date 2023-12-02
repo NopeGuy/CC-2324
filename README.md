@@ -1,6 +1,8 @@
 # Distributed File Sharing System with UDP datagram transfer between nodes
 
-![alt text](https://blog.codinghorror.com/content/images/2019/09/bittorrent-animation.gif)
+<p align="center">
+  <img src="https://blog.codinghorror.com/content/images/2019/09/bittorrent-animation.gif" />
+</p>
 
 ## Overview
 
