@@ -25,8 +25,7 @@ import Client.Worker;
 
 public class UDPMethods {
 
-    public static Map<String, Long> calculateAverageTripTime(String myIP, String fileName,
-            Map<String, List<String>> clientsWithBlocks, DatagramSocket udpSocket)
+    public static Map<String, Long> calculateAverageTripTime(String myIP, String fileName, Map<String, List<String>> clientsWithBlocks, DatagramSocket udpSocket)
             throws IOException, InterruptedException {
         Map<String, Long> averageSpeeds = new HashMap<>();
 
@@ -49,7 +48,7 @@ public class UDPMethods {
             byte[] receive = toReceive.getBytes(StandardCharsets.UTF_8);
 
             List<Long> tripTimes = new ArrayList<>();
-
+            int j = 0;
             // Send three requests for each unique IP and store the trip times
             for (int i = 0; i < 3; i++) {
                 DatagramPacket packet = new DatagramPacket(receive, receive.length, inetAddress, 9090);
@@ -64,10 +63,11 @@ public class UDPMethods {
                 // Check if the connection is false, and skip adding to averageSpeeds
                 if (connection == false) {
                     System.out.println("Connection failed");
-                    break;
+                    j++;
+                    continue;
                 }
-
-                tripTimes.add(tripTime);
+                
+                tripTimes.add(tripTime + j * 1000);
             }
 
             // Calculate the average speed for the current IP

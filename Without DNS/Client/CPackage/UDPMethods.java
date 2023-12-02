@@ -37,6 +37,7 @@ public class UDPMethods {
                 .collect(Collectors.toSet());
 
         for (String ipAddress : uniqueIPs) {
+            int j = 0;
             System.out.println("Calculating average round-trip time to IP: " + ipAddress);
 
             Worker.setConnection(false);
@@ -64,10 +65,11 @@ public class UDPMethods {
                 // Check if the connection is false, and skip adding to averageSpeeds
                 if (connection == false) {
                     System.out.println("Connection failed");
-                    break;
+                    j++;
+                    continue;
                 }
 
-                tripTimes.add(tripTime);
+                tripTimes.add(tripTime + j * 1000);
             }
 
             // Calculate the average speed for the current IP

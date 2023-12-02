@@ -39,7 +39,7 @@ public class Client {
                 FileMethods.fragmentAndSendInfo(outputStream);
                 System.out.println("______________________________________________________\n");
                 System.out.println(
-                    "\n __________________"+
+                    "\n__________________"+
                        "       Menu:      "+
                        "__________________\n"
                     );

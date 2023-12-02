@@ -127,10 +127,10 @@ public class ClientHandler implements Runnable {
                 if (FileBlockNumber.containsKey(requestedFile)) {
                     clientsWithBlocks.append(FileBlockNumber.get(requestedFile));
                 }
-                clientsWithBlocks.append("\n");
+                clientsWithBlocks.append("$");
                 System.out.println("Clients with blocks: " + clientsWithBlocks);
             } else {
-                clientsWithBlocks.append("1;" + "No clients have blocks of file ").append(requestedFile).append("\n");
+                clientsWithBlocks.append("1;" + "No clients have blocks of file ").append(requestedFile).append("$");
             }
 
             // debug
@@ -155,6 +155,7 @@ public class ClientHandler implements Runnable {
                     message += clientIP + " : " + clientBlockFilesMap.get(requestInfoToFind) + "\n";
                 }
                 try {
+                    message += "$";
                     OutputStream outputStream = clientSocket.getOutputStream();
                     byte[] bytesToSend = message.getBytes(StandardCharsets.UTF_8);
                     outputStream.write(bytesToSend);
@@ -163,7 +164,7 @@ public class ClientHandler implements Runnable {
                     e.printStackTrace();
                 }
             } else {
-                String message = "1;" + "No clients have the file with the name: " + requestInfoToFind + "\n";
+                String message = "1;" + "No clients have the file with the name: " + requestInfoToFind + "$";
                 try {
                     OutputStream outputStream = clientSocket.getOutputStream();
                     byte[] bytesToSend = message.getBytes(StandardCharsets.UTF_8);
