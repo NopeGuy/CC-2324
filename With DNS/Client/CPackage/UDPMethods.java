@@ -199,9 +199,6 @@ public class UDPMethods {
             dataOutputStream.write(fileData);
 
             byte[] dataToSendBytes = byteArrayOutputStream.toByteArray();
-            // Size of the data to send
-            int dataToSendLength = dataToSendBytes.length;
-
             // Send UDP packet with file data
             DatagramPacket packet = new DatagramPacket(dataToSendBytes, dataToSendBytes.length, receiverAddress, 9090);
             socket.send(packet);

@@ -47,9 +47,7 @@ public class ClientHandler implements Runnable {
 
             // Delete all the info of clientBlockFilesMap from that IP
             removeExistingEntriesForIP(ip);
-            System.out.println("_____________________________________________
-            Updated clientBlockFilesMap: " + clientBlockFilesMap + "
-            _____________________________________________");
+            System.out.println("_____________________________________________\n Updated clientBlockFilesMap: " + clientBlockFilesMap + "\n_____________________________________________");
 
             clientSocket.close();
         } catch (IOException e) {

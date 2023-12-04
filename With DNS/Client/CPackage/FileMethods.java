@@ -57,7 +57,6 @@ public class FileMethods {
         for (File file : files) {
             if (file.isFile() && !file.getName().contains("«")) {
                 String fileName = file.getName();
-                String path = "./ClientFiles/" + fileName;
                 Path pathFile = Paths.get("./ClientFiles/" + fileName);
                 long fileSize = Files.size(pathFile);
 
@@ -67,8 +66,6 @@ public class FileMethods {
                 } else {
                     numBlocks = ((int) (fileSize / 962)) + 1;
                 }
-
-                int blocksNumber = fileSplitter(fileName, path, numBlocks);
 
                 // Append to the appropriate message builder
                 messageBuilder.append(fileName).append("!").append(numBlocks).append(":");
