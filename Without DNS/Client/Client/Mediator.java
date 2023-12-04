@@ -81,9 +81,7 @@ public class Mediator implements Runnable {
 
         if (firstByte.equals("1")) {
             // Handle request type "1" - Message from Server
-            String receivedData = message.substring(2);
             Thread.sleep(100);
-            System.out.println("Message from Server: " + receivedData);
             requestSemaphore.release();
 
         } else if (firstByte.equals("2")) {
@@ -93,7 +91,6 @@ public class Mediator implements Runnable {
             Map<String, Long> averageSpeeds = new HashMap<>();
 
             // Parse blocks to update the list of people with blocks
-            System.out.println("Received blocks information: " + message);
             message = message.substring(2);
             String[] data = message.split("%");
             String fileName = data[1];
@@ -120,15 +117,12 @@ public class Mediator implements Runnable {
                 }
             }
 
-            System.out.println("Blocks Information Updated: " + clientsWithBlocks);
-
             while (tries < 10 && tryAgain) {
                 tryAgain = false;
 
                 // Check all the download speeds and choose the fastest one
                 averageSpeeds = UDPMethods.calculateAverageTripTime(myIP, fileName, clientsWithBlocks, udpSocket);
                 Thread.sleep(3000);
-                System.out.println("Average speeds: " + averageSpeeds);
 
                 if (tries != 0) {
                     System.out.println("Download failed, retrying to download the file...\n");

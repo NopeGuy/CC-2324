@@ -51,7 +51,6 @@ public class ClientHandler implements Runnable {
 
             // Delete all the info of clientBlockFilesMap from that IP
             removeExistingEntriesForIP(ip);
-            System.out.println("Updated clientBlockFilesMap: " + clientBlockFilesMap);
 
             clientSocket.close();
         } catch (IOException e) {
@@ -80,7 +79,6 @@ public class ClientHandler implements Runnable {
         } else if (requestType.equals("5")) {
             handleRequestType5(ip);
         } else {
-            System.out.println("Invalid request type.");
         }
     }
 
@@ -102,7 +100,6 @@ public class ClientHandler implements Runnable {
                 FileBlockNumber.put(filesInfo[0], numberOfBlocks);
             }
         }
-        System.out.println("Received files for IP " + ip + ": " + clientFilesMap);
     }
 
     private void handleRequestType2(String requestInfo, String ip) {
@@ -121,9 +118,6 @@ public class ClientHandler implements Runnable {
             blocks.add(blockNumber + "/" + ip);
             clientBlockFilesMap.put(fileName, blocks);
         }
-
-        System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
-        System.out.println("FileBlockNumber: " + FileBlockNumber);
     }
 
     private void handleRequestType3(String requestInfo, String ip) {
@@ -146,13 +140,9 @@ public class ClientHandler implements Runnable {
                 clientsWithBlocks.append(FileBlockNumber.get(requestedFile));
             }
             clientsWithBlocks.append("$");
-            System.out.println("Clients with blocks: " + clientsWithBlocks);
         } else {
             clientsWithBlocks.append("1;" + "No clients have blocks of file ").append(requestedFile).append("$");
         }
-
-        // debug
-        System.out.println("Clients with blocks: " + clientsWithBlocks);
         try {
             OutputStream outputStream = clientSocket.getOutputStream();
             byte[] responseBytes = clientsWithBlocks.toString().getBytes(StandardCharsets.UTF_8);

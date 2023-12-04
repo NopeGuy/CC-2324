@@ -18,7 +18,6 @@ public class Worker implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Worker activated");
         String request = new String(data, 0, 1, StandardCharsets.UTF_8);
 
         switch (request) {
@@ -42,7 +41,6 @@ public class Worker implements Runnable {
                 setConnection(true);
                 break;
             default:
-                System.out.println("Invalid byte.");
                 break;
         }
     }
