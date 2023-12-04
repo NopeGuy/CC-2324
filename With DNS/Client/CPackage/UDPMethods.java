@@ -36,6 +36,7 @@ public class UDPMethods {
                 .collect(Collectors.toSet());
 
         for (String ipAddress : uniqueIPs) {
+            System.out.println("Calculating average round-trip time to IP: " + ipAddress);
 
             Worker.setConnection(false);
 
@@ -57,9 +58,11 @@ public class UDPMethods {
 
                 long tripTime = Worker.getTripTime();
                 Boolean connection = Worker.getConnection();
+                System.out.println("Round-trip time received in Mediator: " + tripTime + " milliseconds");
 
                 // Check if the connection is false, and skip adding to averageSpeeds
                 if (connection == false) {
+                    System.out.println("Connection failed");
                     j++;
                     continue;
                 }
@@ -103,6 +106,7 @@ public class UDPMethods {
             // Check if the block already exists in the Blocks folder
             String blockFileName = fileName + "«" + blockNumber;
             if (blockExists(blockFileName)) {
+                System.out.println("Block " + blockFileName + " already exists. Skipping download.");
                 continue;
             }
 
@@ -199,9 +203,15 @@ public class UDPMethods {
             dataOutputStream.write(fileData);
 
             byte[] dataToSendBytes = byteArrayOutputStream.toByteArray();
+            // Size of the data to send
+            int dataToSendLength = dataToSendBytes.length;
+            System.out.println("Data to send length: " + dataToSendLength);
+
             // Send UDP packet with file data
             DatagramPacket packet = new DatagramPacket(dataToSendBytes, dataToSendBytes.length, receiverAddress, 9090);
             socket.send(packet);
+
+            System.out.println("Sent file to IP: " + ip);
 
             socket.close();
         } catch (IOException | NoSuchAlgorithmException e) {
@@ -212,6 +222,7 @@ public class UDPMethods {
     public static Boolean FileReceiver(String filePath, byte[] hashCode, byte[] payload) {
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
             fos.write(payload);
+            System.out.println("File received and saved: " + filePath);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -219,8 +230,11 @@ public class UDPMethods {
         // Check if the received hash code matches the expected hash code
         try {
             if (Arrays.equals(FileMethods.generateMD5(payload, payload.length), hashCode)) {
+                System.out.println("Received file hash code is gucci.");
                 return true;
             } else {
+                System.out.println("Received file hash code doesn't match the expected hash code.");
+                // Delete file that was received
                 File file = new File(filePath);
                 file.delete();
                 return false;

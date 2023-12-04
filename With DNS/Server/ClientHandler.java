@@ -10,7 +10,7 @@ public class ClientHandler implements Runnable {
     private Map<String, Integer> FileBlockNumber;
 
     public ClientHandler(Socket clientSocket, Map<String, List<String>> clientFilesMap,
-            Map<String, List<String>> clientBlockFilesMap, Map<String, Integer> FileBlockNumber) {
+                         Map<String, List<String>> clientBlockFilesMap, Map<String, Integer> FileBlockNumber) {
         this.clientSocket = clientSocket;
         this.clientFilesMap = clientFilesMap;
         this.clientBlockFilesMap = clientBlockFilesMap;
@@ -47,7 +47,7 @@ public class ClientHandler implements Runnable {
 
             // Delete all the info of clientBlockFilesMap from that IP
             removeExistingEntriesForIP(ip);
-            System.out.println("_____________________________________________\n Updated clientBlockFilesMap: " + clientBlockFilesMap + "\n_____________________________________________");
+            System.out.println("Updated clientBlockFilesMap: " + clientBlockFilesMap);
 
             clientSocket.close();
         } catch (IOException e) {
@@ -104,7 +104,7 @@ public class ClientHandler implements Runnable {
                 clientBlockFilesMap.put(fileName, blocks);
             }
 
-            System.out.println("_____________________________________________ \nReceived blocks information for IP " + ip + ": \n" + clientBlockFilesMap + "\n _____________________________________________");
+            System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
             System.out.println("FileBlockNumber: " + FileBlockNumber);
         }
 
@@ -128,10 +128,13 @@ public class ClientHandler implements Runnable {
                     clientsWithBlocks.append(FileBlockNumber.get(requestedFile));
                 }
                 clientsWithBlocks.append("$");
+                System.out.println("Clients with blocks: " + clientsWithBlocks);
             } else {
                 clientsWithBlocks.append("1;" + "No clients have blocks of file ").append(requestedFile).append("$");
             }
 
+            // debug
+            System.out.println("Clients with blocks: " + clientsWithBlocks);
             try {
                 OutputStream outputStream = clientSocket.getOutputStream();
                 byte[] responseBytes = clientsWithBlocks.toString().getBytes(StandardCharsets.UTF_8);
@@ -172,9 +175,9 @@ public class ClientHandler implements Runnable {
                 }
             }
         }
-        if (requestType.equals("5")) {
+        if(requestType.equals("5")){
             removeExistingEntriesForIP(ip);
-            System.out.println("IP " + ip + "Disconnected, updating clientBlockFilesMap.");
+            System.out.println("Updated clientBlockFilesMap: " + clientBlockFilesMap);
         }
     }
 

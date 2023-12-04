@@ -30,7 +30,7 @@ public class Server {
                 Socket clientSocket = serverSocket.accept();
                 // Print Client DNS 
                 String clientDns = clientSocket.getInetAddress().getHostName();
-                System.out.println("Client connected: " + clientDns);
+                System.out.println("[DEBUG] Client connected: " + clientDns);
 
                 // Start a new thread to handle the client
                 executorService.execute(new ClientHandler(clientSocket, clientFilesMap, clientBlockFilesMap, FileBlockNumber));
