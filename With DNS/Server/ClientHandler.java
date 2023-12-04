@@ -47,7 +47,6 @@ public class ClientHandler implements Runnable {
 
             // Delete all the info of clientBlockFilesMap from that IP
             removeExistingEntriesForIP(ip);
-            System.out.println("Updated clientBlockFilesMap: " + clientBlockFilesMap);
 
             clientSocket.close();
         } catch (IOException e) {
@@ -58,7 +57,6 @@ public class ClientHandler implements Runnable {
     private void processMessage(String receivedString, String ip) {
         String[] parts = receivedString.split(";");
         if (parts.length < 2) {
-            System.err.println("Invalid header format.");
             return;
         }
 
@@ -84,7 +82,6 @@ public class ClientHandler implements Runnable {
                     FileBlockNumber.put(filesInfo[0], numberOfBlocks);
                 }
             }
-            System.out.println("Received files for IP " + ip + ": " + clientFilesMap);
         }
 
         if (requestType.equals("2")) {
@@ -103,9 +100,6 @@ public class ClientHandler implements Runnable {
                 blocks.add(blockNumber + "/" + ip);
                 clientBlockFilesMap.put(fileName, blocks);
             }
-
-            System.out.println("Received blocks information for IP " + ip + ": " + clientBlockFilesMap);
-            System.out.println("FileBlockNumber: " + FileBlockNumber);
         }
 
         if (requestType.equals("3")) {
@@ -128,13 +122,10 @@ public class ClientHandler implements Runnable {
                     clientsWithBlocks.append(FileBlockNumber.get(requestedFile));
                 }
                 clientsWithBlocks.append("$");
-                System.out.println("Clients with blocks: " + clientsWithBlocks);
             } else {
                 clientsWithBlocks.append("1;" + "No clients have blocks of file ").append(requestedFile).append("$");
             }
 
-            // debug
-            System.out.println("Clients with blocks: " + clientsWithBlocks);
             try {
                 OutputStream outputStream = clientSocket.getOutputStream();
                 byte[] responseBytes = clientsWithBlocks.toString().getBytes(StandardCharsets.UTF_8);
@@ -177,7 +168,6 @@ public class ClientHandler implements Runnable {
         }
         if(requestType.equals("5")){
             removeExistingEntriesForIP(ip);
-            System.out.println("Updated clientBlockFilesMap: " + clientBlockFilesMap);
         }
     }
 
