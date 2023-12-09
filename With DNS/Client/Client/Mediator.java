@@ -121,6 +121,8 @@ public class Mediator implements Runnable {
                     clientsWithBlocks.computeIfAbsent(blockNumber, k -> new ArrayList<>()).add(ipAddress);
                 }
             }
+            
+            System.out.println("Starting Download...");
 
             while (tries < 10 && tryAgain) {
                 tryAgain = false;
