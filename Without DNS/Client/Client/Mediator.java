@@ -117,6 +117,8 @@ public class Mediator implements Runnable {
                 }
             }
 
+            System.out.println("Starting Download...");
+
             while (tries < 10 && tryAgain) {
                 tryAgain = false;
 
