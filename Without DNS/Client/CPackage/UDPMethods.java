@@ -55,7 +55,7 @@ public class UDPMethods {
                 DatagramPacket packet = new DatagramPacket(receive, receive.length, inetAddress, 9090);
                 udpSocket.send(packet);
 
-                Thread.sleep(100);
+                Thread.sleep(400);
 
                 long tripTime = Worker.getTripTime();
                 Boolean connection = Worker.getConnection();
