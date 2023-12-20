@@ -16,6 +16,11 @@ This project implements a distributed file sharing system using Java socket prog
 - Menu System: Clients can interact with the system through a simple console menu.
 - DNS system: If you configure bind9 in your system you can connect the nodes through their domain names.
 
+## Limitations
+
+- Since this is only a proof of concept, all the files are split into 962 bytes blocks, and the identifier for them goes up to 9999 so only around 9mb are allowed per file you want to transfer.
+- If there is one node that has all the blocks and it has the best connection, it is prioritized above all the others and the transfer will never be distributed as to lower the load on the node.
+
 ## Components
 ### Server
 
